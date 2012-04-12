@@ -3,7 +3,7 @@ VDR Plugin 'epgfixer' Revision History
 
 2012-04-12: Version 0.0.4
 
-- Editing of regular expressions from setup menu.
+- Allow enabling regular expressions for only selected channels.
 
 2012-03-25: Version 0.0.3
 
