@@ -1,0 +1,24 @@
+VDR Plugin 'epgfixer' Revision History
+--------------------------------------
+
+2012-04-12: Version 0.0.4
+
+- Editing of regular expressions from setup menu.
+
+2012-03-25: Version 0.0.3
+
+- Reloading regular expressions and clearing EPG data from setup menu. 
+- Enable internal optimisation of regular expressions in PCRE.
+- Enabling/disabling of regular expressions from setup menu.
+- Editing of regular expressions from setup menu.
+- Cleaning up code (some cleanup by Rolf Ahrenberg).
+
+2012-03-18: Version 0.0.2
+
+- Rewrite to use regular expressions.
+- Include EPG bug fixes from VDR and make them individually selectable 
+  from setup.
+
+2012-03-17: Version 0.0.1
+
+- Initial revision.

@@ -1,0 +1,68 @@
+# VDR Epgfixer plugin language source file.
+# Copyright (C) 2012 Matti Lehtimäki
+# This file is distributed under the same license as the PACKAGE package.
+# Matti Lehtimäki, 2012-
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: vdr-epgfixer 0.0.3\n"
+"Report-Msgid-Bugs-To: <see README>\n"
+"POT-Creation-Date: 2012-03-25 14:46+0300\n"
+"PO-Revision-Date: 2012-03-25 15:20+0300\n"
+"Last-Translator: Matti Lehtimäki <matti.lehtimaki@gmail.com>\n"
+"Language-Team: Finnish <vdr@linuxtv.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fi\n"
+
+msgid "Fix bugs in EPG"
+msgstr "Korjaa virheitä EPG:ssä"
+
+msgid "Toggle state"
+msgstr "Vaihda tila"
+
+msgid "Add"
+msgstr "Lisää"
+
+msgid "Delete"
+msgstr "Poista"
+
+msgid "Cancel"
+msgstr "Peru"
+
+msgid "Remove quotes from ShortText"
+msgstr "Poista lainaukset lyhyestä kuvauksesta"
+
+msgid "Move Description from ShortText"
+msgstr "Siirrä kuvaus lyhyeen kuvaukseen"
+
+msgid "Remove repeated title from ShortText"
+msgstr "Poista nimi lyhyestä kuvauksesta"
+
+msgid "Remove double quotes from ShortText"
+msgstr "Poista lainausmerkit lyhyestä kuvauksesta"
+
+msgid "Remove useless formatting"
+msgstr "Poista ylimääräinen muotoilu"
+
+msgid "Move long ShortText to Description"
+msgstr "Siirrä pitkä lyhyt kuvaus kuvaukseksi"
+
+msgid "Prevent equal ShortText and Description"
+msgstr "Estä identtinen kuvaus ja lyhyt kuvaus"
+
+msgid "Replace backticks with single quotes"
+msgstr "Korvaa gravis heittomerkillä"
+
+msgid "Fix stream component descriptions"
+msgstr "Korjaa lähetekomponenttien kuvaukset"
+
+msgid "Regular expressions"
+msgstr "Säännölliset lausekkeet"
+
+msgid "Reload regexp.conf"
+msgstr "Lataa uudelleen regexp.conf"
+
+msgid "Clear EPG data"
+msgstr "Tyhjennä EPG tiedot"
