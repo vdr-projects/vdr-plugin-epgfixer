@@ -33,6 +33,8 @@ Syntax of regexp.conf line is "Channel_list:Parsed_epg_field=Regexp" with:
 - Channel_list is optional comma separated list of channels for which the
   regular expression is used. If no list of channels is given the regular
   expression is used for all channels.
+- Channel_list for a regular expression can contain either channel IDs
+  (e.g. S19.2E-1-1089-12003-0) or numbers but not both.
 - Parsed_epg_field is the EPG field for which the regular expression is applied
   with available field names title, shorttext and description.
 - Regular expressions use named backreferences with either title, shorttext,

@@ -16,15 +16,14 @@ const char *strSources[] = { "title","shorttext","description","undefined" };
 cRegexp::cRegexp()
 {
   enabled = false;
-  error = NULL;
-  erroffset = -1;
   regexp = NULL;
   string = NULL;
   source = REGEXP_UNDEFINED;
   re = NULL;
   sd = NULL;
   numchannels = 0;
-  channels = NULL;
+  channels_num = NULL;
+  channels_str = NULL;
 }
 
 cRegexp::~cRegexp(void)
@@ -34,21 +33,38 @@ cRegexp::~cRegexp(void)
 
 void cRegexp::Free(void)
 {
-  free(channels);
+  free(channels_num);
+  if (channels_str) {
+     int i = 0;
+     while (i < numchannels) {
+           free(channels_str[i]);
+           i++;
+           }
+     }
+  free(channels_str);
   free(regexp);
   free(string);
-  channels = NULL;
+  channels_num = NULL;
+  channels_str = NULL;
   regexp = NULL;
   string = NULL;
   FreeCompiled();
 }
 
-int cRegexp::GetChannel(int index)
+int cRegexp::GetChannelNum(int index)
 {
-  if (index >= 0 && index < numchannels)
-     return channels[index];
+  if (channels_num && index >= 0 && index < numchannels)
+     return channels_num[index];
   else
      return -1;
+}
+
+const char *cRegexp::GetChannelID(int index)
+{
+  if (channels_str && index >= 0 && index < numchannels)
+     return channels_str[index];
+  else
+     return NULL;
 }
 
 void cRegexp::ToggleEnabled(void)
@@ -75,28 +91,34 @@ void cRegexp::SetFromString(char *s, bool Enabled, bool Precompile)
         regexp = strdup(p + 1);
         char *chanfield = (s[0] == '!') ? s+1 : s;
         char *field = chanfield;
-        if (atoi(chanfield)) {
-           char *f = strchr(chanfield, ':');
-           if (f) {
-              *f = 0;
-              field = f+1;
-              char *c = chanfield;
-              numchannels = 0;
-              while (c) {
-                    numchannels++;
-                    c = strchr(c+1, ',');
-                    }
-              if (numchannels > 0) {
-                 c = chanfield;
-                 channels = (int *)malloc(sizeof(int)*numchannels);
-                 int i = 1;
-                 channels[i] = atoi(c);
-                 while (i < numchannels) {
-                       c = strchr(c+1, ',');
-                       channels[i] = atoi(c+1);
-                       i++;
-                       }
+        char *f = strchr(chanfield, ':');
+        if (f) {
+           *f = 0;
+           field = f+1;
+           char *c = chanfield;
+           numchannels = 0;
+           while (c) {
+                 numchannels++;
+                 c = strchr(c+1, ',');
                  }
+           if (numchannels > 0) {
+              c = chanfield;
+              // Use channel numbers
+              if (atoi(chanfield))
+                 channels_num = (int *)malloc(sizeof(int)*numchannels);
+              else// use channel IDs
+                 channels_str = (char **)malloc(sizeof(char *)*numchannels);
+              int i = 0;
+              char *pc = strtok(c, ",");
+              while (i < numchannels) {
+                    // Use channel numbers
+                    if (atoi(chanfield))
+                       channels_num[i] = atoi(pc);
+                    else// use channel IDs
+                       channels_str[i] = strdup(pc);
+                    pc = strtok(NULL, ",");
+                    i++;
+                    }
               }
            }
         if (strcmp(field, "title") == 0)
@@ -106,7 +128,7 @@ void cRegexp::SetFromString(char *s, bool Enabled, bool Precompile)
         if (strcmp(field, "description") == 0)
            source = REGEXP_DESCRIPTION;
         if (precompile)
-            Compile();
+           Compile();
         }
      }
 }
@@ -130,7 +152,9 @@ void cRegexp::FreeCompiled()
 void cRegexp::Compile()
 {
   FreeCompiled();
-  re = pcre_compile(regexp, 0, (const char **)&error, &erroffset, NULL);
+  const char *error;
+  int erroffset;
+  re = pcre_compile(regexp, 0, &error, &erroffset, NULL);
   if (error) {
      esyslog("PCRE compile error: %s at offset %i", error, erroffset);
      enabled = false;
@@ -177,10 +201,8 @@ bool cEpgfixerRegexps::LoadRegexps(const char *FileName, bool AllowComments, boo
      FILE *f = fopen(FileName, "r");
      if (f) {
         char *s;
-        int line = 0;
         cReadLine ReadLine;
         while ((s = ReadLine.Read(f)) != NULL) {
-              line++;
               if (!isempty(s)) {
                  regexps->Add(new cRegexp());
                  regexps->Last()->SetFromString(s, true, Precompile);

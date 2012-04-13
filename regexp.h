@@ -21,15 +21,14 @@ class cRegexp : public cListObject
 {
 private:
   bool enabled;
-  char *error;
-  int erroffset;
   char *regexp;
   char *string;
+  int *channels_num;
+  char **channels_str;
+  int numchannels;
   int source;
   pcre *re;
   pcre_extra *sd;
-  int numchannels;
-  int *channels;
   void Free();
 public:
   cRegexp();
@@ -42,7 +41,8 @@ public:
   bool Enabled(void) { return enabled; }
   void ToggleEnabled(void);
   int NumChannels() { return numchannels; }
-  int GetChannel(int index);
+  int GetChannelNum(int index);
+  const char *GetChannelID(int index);
   int GetSource(void) { return source; }
   pcre *GetRe(void) { return re; }
   pcre_extra *GetSd(void) { return sd; }
@@ -51,10 +51,7 @@ public:
 class cRegexpList : public cList<cRegexp>
 {
 public:
-  void Clear(void)
-  {
-    cList<cRegexp>::Clear();
-  }
+  void Clear(void) { cList<cRegexp>::Clear(); }
   cRegexpList(void) {}
 };
 
@@ -65,7 +62,6 @@ private:
   char *fileName;
 public:
   cRegexpList *regexps;
-
   cEpgfixerRegexps();
   ~cEpgfixerRegexps();
   void SetRegexpConfigFile(const char *FileName);

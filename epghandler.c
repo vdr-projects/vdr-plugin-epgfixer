@@ -130,13 +130,10 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // Some channels put the same information into ShortText and Description.
   // In that case we delete one of them:
   if (EpgfixerSetup.equalshorttextanddescription && event->ShortText() && event->Description() && strcmp(event->ShortText(), event->Description()) == 0) {
-     if (strlen(event->ShortText()) > MAX_USEFUL_EPISODE_LENGTH) {
+     if (strlen(event->ShortText()) > MAX_USEFUL_EPISODE_LENGTH)
         event->SetShortText(NULL);
-        }
-     else {
+     else
         event->SetDescription(NULL);
-
-        }
      }
 
   // Some channels use the ` ("backtick") character, where a ' (single quote)
@@ -246,14 +243,15 @@ bool cEpgfixerEpgHandler::ApplyRegexp(cRegexp *regexp, cEvent *Event, const char
   if (regexp->NumChannels() > 0) {
      bool found = false;
      int i = 0;
-     while (i < regexp->NumChannels()) {
-           if (Channels.GetByChannelID(Event->ChannelID())->Number() == regexp->GetChannel(i))
+     while (i < regexp->NumChannels() && !found) {
+           if (Channels.GetByChannelID(Event->ChannelID())->Number() == regexp->GetChannelNum(i))
+              found = true;
+           if (regexp->GetChannelID(i) && strcmp(*(Event->ChannelID().ToString()), regexp->GetChannelID(i)) == 0)
               found = true;
            i++;
            }
-     if (!found) {
+     if (!found)
         active = false;
-        }
      }
   if (active && regexp->Enabled() && regexp->GetRe()) {
      const char *string;
