@@ -338,10 +338,16 @@ bool cEpgfixerEpgHandler::FixBugs(cEvent *Event)
                tmpstring = strdup(Event->Title());
                break;
              case REGEXP_SHORTTEXT:
-               tmpstring = strdup(Event->ShortText());
+               if (Event->ShortText())
+                  tmpstring = strdup(Event->ShortText());
+               else
+                  tmpstring = strdup("");
                break;
              case REGEXP_DESCRIPTION:
-               tmpstring = strdup(Event->Description());
+               if (Event->Description())
+                  tmpstring = strdup(Event->Description());
+               else
+                  tmpstring = strdup("");
                break;
              default:
                tmpstring = strdup("");
