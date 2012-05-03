@@ -22,6 +22,7 @@ public:
   int equalshorttextanddescription;
   int nobackticks;
   int components;
+  int striphtml;
 
   cEpgfixerSetup();
   bool SetupParse(const char *Name, const char *Value);

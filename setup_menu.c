@@ -8,164 +8,147 @@
 #include "setup_menu.h"
 #include <vdr/config.h>
 #include <vdr/i18n.h>
+#include "tools.h"
+#include "charset.h"
 #include "regexp.h"
 
-//--- cMenuSetupRegexp ------------------------------------------------------
+//--- cMenuSetupConfigEditor ------------------------------------------------------
 
 #define MAXREGEXPLENGTH 512
 
 const char *RegexpChars = 
-  " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-=.,*%$^<>~:;\\/?!()[]{}#";
+  " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#";
 
-class cMenuSetupRegexp : public cMenuSetupPage
+template<class T> class cMenuSetupConfigEditor : public cMenuSetupPage
 {
 private:
+  cEpgfixerList<T> *list;
   const char *fileName;
   char **lines;
   char **numlines;
-  void LoadRegexpArray();
-  void FreeRegexpArray();
-  void Save();
-protected:
-  virtual void Store(void);
-  void Set(void);
-public:
-  cMenuSetupRegexp(void);
-  ~cMenuSetupRegexp(void);
-  virtual eOSState ProcessKey(eKeys Key);
-};
-
-void cMenuSetupRegexp::LoadRegexpArray()
-{
-  lines = (char **)malloc(sizeof(char *)*(EpgfixerRegexps.regexps->Count()));
-  int i = 0;
-  cRegexp *regex = (cRegexp *)EpgfixerRegexps.regexps->First();
-  while (regex) {
-        lines[i] = (char *)malloc(sizeof(char)*MAXREGEXPLENGTH);
-        snprintf(lines[i], MAXREGEXPLENGTH, "%s", regex->GetString());
-        regex = (cRegexp *)regex->Next();
-        i++;
-        }
-}
-
-cMenuSetupRegexp::cMenuSetupRegexp(void)
-{
-  cEitFilter::SetDisableUntil(time(NULL) + 1000);
-  SetCols(2);
-  fileName = EpgfixerRegexps.RegexpConfigFile();
-  LoadRegexpArray();
-  Set();
-}
-
-void cMenuSetupRegexp::FreeRegexpArray(void)
-{
-  int i = 0;
-  while (i < EpgfixerRegexps.regexps->Count()) {
-        free(lines[i]);
-        i++;
-        }
-  free(lines);
-}
-
-cMenuSetupRegexp::~cMenuSetupRegexp(void)
-{
-  FreeRegexpArray();
-  cEitFilter::SetDisableUntil(time(NULL) + 5);
-}
-
-void cMenuSetupRegexp::Set(void)
-{
-  Clear();
-  int i = 0;
-  cRegexp *regex = (cRegexp *)EpgfixerRegexps.regexps->First();
-  while (i < EpgfixerRegexps.regexps->Count()) {
-        Add(new cMenuEditStrItem(regex->Enabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, RegexpChars));
-        regex = (cRegexp *)regex->Next();
-        i++;
-        }
-  SetHelp(tr("Toggle state"), tr("Add"), tr("Delete"), tr("Cancel"));
-  Display();
-}
-
-void cMenuSetupRegexp::Store(void)
-{
-  // Store regular expressions back to list
-  int i = 0;
-  cRegexp *regex = (cRegexp *)EpgfixerRegexps.regexps->First();
-  while (i < EpgfixerRegexps.regexps->Count()) {
-        regex->SetFromString(lines[i], regex->Enabled(), true);
-        regex = (cRegexp *)regex->Next();
-        i++;
-        }
-}
-
-void cMenuSetupRegexp::Save(void)
-{
-  // Store regular expressions to regxep.conf
-  if (fileName && access(fileName, F_OK) == 0) {
-     FILE *f = fopen(fileName, "w");
-     if (f) {
-        cRegexp *regex = (cRegexp *)EpgfixerRegexps.regexps->First();
-        while (regex) {
-              if (regex->GetSource() == REGEXP_UNDEFINED)
-                 fprintf(f, "%s\n", regex->GetString());
-              else
-                 fprintf(f, "%s%s\n", regex->Enabled() ? "" : "!", regex->GetString());
-              regex = (cRegexp *)regex->Next();
-              }
-        fclose(f);
-        }
-     }
-}
-
-eOSState cMenuSetupRegexp::ProcessKey(eKeys Key)
-{
-  eOSState state = cOsdMenu::ProcessKey(Key);
-
-  if (state == osUnknown) {
-     switch (Key) {
-       case kRed:
-         if (EpgfixerRegexps.regexps->Get(Current())->GetSource() != REGEXP_UNDEFINED) {
-            EpgfixerRegexps.regexps->Get(Current())->ToggleEnabled();
-            Set();
-            Display();
-            }
-         state = osContinue;
-         break;
-       case kGreen:
-         Store();
-         FreeRegexpArray();
-         EpgfixerRegexps.regexps->Add(new cRegexp());
-         LoadRegexpArray();
-         Set();
-         Display();
-         state = osContinue;
-         break;
-       case kYellow:
-         Store();
-         FreeRegexpArray();
-         EpgfixerRegexps.regexps->Del(EpgfixerRegexps.regexps->Get(Current()),true);
-         LoadRegexpArray();
-         Set();
-         Display();
-         state = osContinue;
-         break;
-       case kBlue:
-         EpgfixerRegexps.ReloadRegexps();
-         state = osBack;
-         break;
-       case kOk:
-         Store();
-         Save();
-         EpgfixerRegexps.ReloadRegexps();
-         state = osBack;
-         break;
-       default:
-         break;
+  virtual void LoadListToArray(void)
+  {
+    lines = (char **)malloc(sizeof(char *)*(list->Count()));
+    int i = 0;
+    T *item = (T *)list->First();
+    while (item) {
+          lines[i] = (char *)malloc(sizeof(char)*MAXREGEXPLENGTH);
+          snprintf(lines[i], MAXREGEXPLENGTH, "%s", item->GetString());
+          item = (T *)item->Next();
+          i++;
+          }
+  }
+  void FreeArray()
+  {
+    int i = 0;
+    while (i < list->Count()) {
+          free(lines[i]);
+          i++;
+          }
+    free(lines);
+  }
+  void Save()
+  {
+    // Store regular expressions to config file
+    if (fileName && access(fileName, F_OK) == 0) {
+       FILE *f = fopen(fileName, "w");
+       if (f) {
+          T *item = (T *)list->First();
+          while (item) {
+                item->PrintConfigLineToFile(f);
+                item = (T *)item->Next();
+                }
+          fclose(f);
+          }
        }
-     }
-  return state;
-}
+  }
+protected:
+  virtual void Store(void)
+  {
+    // Store regular expressions back to list
+    int i = 0;
+    T *item = (T *)list->First();
+    while (i < list->Count()) {
+          item->SetFromString(lines[i], item->Enabled());
+          item = (T *)item->Next();
+          i++;
+          }
+  }
+  void Set(void)
+  {
+    Clear();
+    int i = 0;
+    T *item = (T *)list->First();
+    while (i < list->Count()) {
+          Add(new cMenuEditStrItem(item->Enabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, RegexpChars));
+          item = (T *)item->Next();
+          i++;
+          }
+    SetHelp(tr("Toggle state"), tr("Add"), tr("Delete"), tr("Cancel"));
+    Display();
+  }
+public:
+  cMenuSetupConfigEditor(cEpgfixerList<T> *l)
+  {
+    list = l;
+    cEitFilter::SetDisableUntil(time(NULL) + 1000);
+    SetCols(2);
+    fileName = list->GetConfigFile();
+    LoadListToArray();
+    Set();
+  }
+  ~cMenuSetupConfigEditor(void)
+  {
+    FreeArray();
+    cEitFilter::SetDisableUntil(time(NULL) + 5);
+  }
+  virtual eOSState ProcessKey(eKeys Key)
+  {
+    eOSState state = cOsdMenu::ProcessKey(Key);
+
+    if (state == osUnknown) {
+       switch (Key) {
+         case kRed:
+           list->Get(Current())->ToggleEnabled();
+           Set();
+           Display();
+           state = osContinue;
+           break;
+         case kGreen:
+           Store();
+           FreeArray();
+           list->Add(new T());
+           LoadListToArray();
+           Set();
+           Display();
+           state = osContinue;
+           break;
+         case kYellow:
+           Store();
+           FreeArray();
+           list->Del(list->Get(Current()),true);
+           LoadListToArray();
+           Set();
+           Display();
+           state = osContinue;
+           break;
+         case kBlue:
+           list->ReloadConfigFile();
+           state = osBack;
+           break;
+         case kOk:
+           Store();
+           Save();
+           list->ReloadConfigFile();
+           state = osBack;
+           break;
+         default:
+           break;
+         }
+       }
+    return state;
+  }
+};
 
 //--- cMenuSetupEpgfixer ------------------------------------------------------
 
@@ -178,6 +161,8 @@ cMenuSetupEpgfixer::cMenuSetupEpgfixer(void)
 void cMenuSetupEpgfixer::Set(void)
 {
   Clear();
+  Add(new cOsdItem(tr("Regular expressions"), osUser1));
+  Add(new cOsdItem(tr("Character set conversions"), osUser2));
 
   Add(new cMenuEditBoolItem(tr("Remove quotes from ShortText"),
                             &newconfig.quotedshorttext));
@@ -197,8 +182,9 @@ void cMenuSetupEpgfixer::Set(void)
                             &newconfig.nobackticks));
   Add(new cMenuEditBoolItem(tr("Fix stream component descriptions"),
                             &newconfig.components));
-  Add(new cOsdItem(tr("Regular expressions"), osUser1));
-  SetHelp(tr("Reload regexp.conf"),NULL,NULL, tr("Clear EPG data"));
+  Add(new cMenuEditBoolItem(tr("Strip HTML entities"),
+                            &newconfig.striphtml));
+  SetHelp(tr("Reload files"),NULL,NULL, tr("Clear EPG data"));
   Display();
 }
 
@@ -215,6 +201,7 @@ void cMenuSetupEpgfixer::Store(void)
   SetupStore("PreventEqualShortTextAndDescription", EpgfixerSetup.equalshorttextanddescription);
   SetupStore("ReplaceBackticksWithSingleQuotes",    EpgfixerSetup.nobackticks);
   SetupStore("FixStreamComponentDescriptions",      EpgfixerSetup.components);
+  SetupStore("StripHTMLentities",           		EpgfixerSetup.striphtml);
 
   Setup.Save();
 }
@@ -226,14 +213,14 @@ eOSState cMenuSetupEpgfixer::ProcessKey(eKeys Key)
   if (state == osUnknown) {
      switch (Key) {
        case kRed:
-         EpgfixerRegexps.ReloadRegexps();
+         EpgfixerRegexps.ReloadConfigFile();
+         EpgfixerCharSets.ReloadConfigFile();
          state = osContinue;
          break;
        case kBlue:
          cEitFilter::SetDisableUntil(time(NULL) + 10);
-         if (cSchedules::ClearAll()) {
+         if (cSchedules::ClearAll())
             cEitFilter::SetDisableUntil(time(NULL) + 10);
-            }
          state = osContinue;
          break;
        default:
@@ -241,6 +228,8 @@ eOSState cMenuSetupEpgfixer::ProcessKey(eKeys Key)
        }
      }
   else if (state == osUser1)
-     return AddSubMenu(new cMenuSetupRegexp());
+     return AddSubMenu(new cMenuSetupConfigEditor<cRegexp>(&EpgfixerRegexps));
+  else if (state == osUser2)
+     return AddSubMenu(new cMenuSetupConfigEditor<cCharSet>(&EpgfixerCharSets));
   return state;
 }

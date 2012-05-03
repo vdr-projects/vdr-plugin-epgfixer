@@ -7,6 +7,7 @@
 
 #include <vdr/plugin.h>
 #include <vdr/i18n.h>
+#include "charset.h"
 #include "regexp.h"
 #include "setup_menu.h"
 #include "epghandler.h"
@@ -71,8 +72,10 @@ bool cPluginEpgfixer::ProcessArgs(int argc, char *argv[])
 bool cPluginEpgfixer::Initialize(void)
 {
   // Initialize any background activities the plugin shall perform.
-  EpgfixerRegexps.SetRegexpConfigFile(AddDirectory(cPlugin::ConfigDirectory(PLUGIN_NAME_I18N), "regexp.conf")); // allowed only via main thread!);
-  EpgfixerRegexps.ReloadRegexps();
+  EpgfixerRegexps.SetConfigFile(AddDirectory(cPlugin::ConfigDirectory(PLUGIN_NAME_I18N), "regexp.conf")); // allowed only via main thread!);
+  EpgfixerRegexps.ReloadConfigFile();
+  EpgfixerCharSets.SetConfigFile(AddDirectory(cPlugin::ConfigDirectory(PLUGIN_NAME_I18N), "charset.conf")); // allowed only via main thread!);
+  EpgfixerCharSets.ReloadConfigFile();
   return new cEpgfixerEpgHandler();
 }
 
@@ -144,6 +147,8 @@ const char **cPluginEpgfixer::SVDRPHelpPages(void)
   static const char *HelpPages[] = {
     "RLRE\n"
     "    Reload regexp.conf.",
+    "RLCH\n"
+    "    Reload charset.conf.",
     NULL
     };
   return HelpPages;
@@ -152,11 +157,19 @@ const char **cPluginEpgfixer::SVDRPHelpPages(void)
 cString cPluginEpgfixer::SVDRPCommand(const char *Command, const char *Option, int &ReplyCode)
 {
   if (strcasecmp(Command, "RLRE") == 0) {
-     if (EpgfixerRegexps.ReloadRegexps()) {
+     if (EpgfixerRegexps.ReloadConfigFile()) {
         return cString("Reloaded regexp.conf");
      } else {
         ReplyCode = 554; // Requested action failed
         return cString("Reloading regexp.conf failed");
+     }
+  }
+  else if (strcasecmp(Command, "RLCH") == 0) {
+     if (EpgfixerCharSets.ReloadConfigFile()) {
+        return cString("Reloaded charset.conf");
+     } else {
+        ReplyCode = 554; // Requested action failed
+        return cString("Reloading charset.conf failed");
      }
   }
   return NULL;

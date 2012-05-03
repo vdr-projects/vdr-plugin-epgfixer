@@ -57,7 +57,7 @@ DEFINES += -D_GNU_SOURCE -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o config.o epghandler.o setup_menu.o regexp.o
+OBJS = $(PLUGIN).o charset.o config.o epghandler.o regexp.o setup_menu.o tools.o
 
 ifeq ($(REGEXLIB), pcre)
 LIBS += $(shell pcre-config --libs-posix)

@@ -1,5 +1,5 @@
 /*
- * regexp.h: Regular expression list
+ * charset.h: Character set list item
  *
  * See the README file for copyright information and how to reach the author.
  *

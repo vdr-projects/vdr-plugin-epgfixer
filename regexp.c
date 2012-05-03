@@ -1,5 +1,5 @@
 /*
- * regexp.c: Regular expression list
+ * regexp.c: Regular expression list item
  *
  * See the README file for copyright information and how to reach the author.
  *
@@ -9,144 +9,27 @@
 #include <unistd.h>
 
 /* Global instance */
-cEpgfixerRegexps EpgfixerRegexps;
+cEpgfixerList<cRegexp> EpgfixerRegexps;
 
 const char *strSources[] = { "title","shorttext","description","undefined" };
 
+typedef enum { ATITLE,PTITLE,TITLE,ASHORTTEXT,PSHORTTEXT,SHORTTEXT,ADESCRIPTION,PDESCRIPTION,DESCRIPTION,RATING } backrefs;
+const char *strBackrefs[] = { "atitle","ptitle","title","ashorttext","pshorttext","shorttext","adescription","pdescription","description","rating" };
+
 cRegexp::cRegexp()
 {
-  enabled = false;
   regexp = NULL;
-  string = NULL;
   source = REGEXP_UNDEFINED;
   re = NULL;
   sd = NULL;
-  numchannels = 0;
-  channels_num = NULL;
-  channels_str = NULL;
 }
 
 cRegexp::~cRegexp(void)
 {
   Free();
-}
-
-void cRegexp::Free(void)
-{
-  free(channels_num);
-  if (channels_str) {
-     int i = 0;
-     while (i < numchannels) {
-           free(channels_str[i]);
-           i++;
-           }
-     }
-  free(channels_str);
   free(regexp);
-  free(string);
-  channels_num = NULL;
-  channels_str = NULL;
   regexp = NULL;
-  string = NULL;
   FreeCompiled();
-}
-
-int cRegexp::GetChannelNum(int index)
-{
-  if (channels_num && index >= 0 && index < numchannels)
-     return channels_num[index];
-  else
-     return -1;
-}
-
-const char *cRegexp::GetChannelID(int index)
-{
-  if (channels_str && index >= 0 && index < numchannels)
-     return channels_str[index];
-  else
-     return NULL;
-}
-
-void cRegexp::ToggleEnabled(void)
-{
-  enabled = enabled ? 0 : 1;
-}
-
-void cRegexp::SetFromString(char *s, bool Enabled, bool Precompile)
-{
-  Free();
-  string = strdup(s);
-  enabled = Enabled;
-  bool precompile = Precompile;
-  if (s[0] == '!' || s[0] == '#') {
-     enabled = false;
-     precompile = false;
-     }
-  char *p = (s[0] == '#') ? s : strchr(s, '=');
-  if (p) {
-     if (p[0] == '#')
-        source = REGEXP_UNDEFINED;
-     else {
-        *p = 0;
-        regexp = strdup(p + 1);
-        char *chanfield = (s[0] == '!') ? s+1 : s;
-        char *field = chanfield;
-        char *f = strchr(chanfield, ':');
-        if (f) {
-           *f = 0;
-           field = f+1;
-           char *c = chanfield;
-           numchannels = 0;
-           while (c) {
-                 numchannels++;
-                 c = strchr(c+1, ',');
-                 }
-           if (numchannels > 0) {
-              c = chanfield;
-              // Use channel numbers
-              if (atoi(chanfield))
-                 channels_num = (int *)malloc(sizeof(int)*numchannels);
-              else// use channel IDs
-                 channels_str = (char **)malloc(sizeof(char *)*numchannels);
-              int i = 0;
-              char *pc = strtok(c, ",");
-              while (i < numchannels) {
-                    // Use channel numbers
-                    if (atoi(chanfield))
-                       channels_num[i] = atoi(pc);
-                    else// use channel IDs
-                       channels_str[i] = strdup(pc);
-                    pc = strtok(NULL, ",");
-                    i++;
-                    }
-              }
-           }
-        if (strcmp(field, "title") == 0)
-           source = REGEXP_TITLE;
-        if (strcmp(field, "shorttext") == 0)
-           source = REGEXP_SHORTTEXT;
-        if (strcmp(field, "description") == 0)
-           source = REGEXP_DESCRIPTION;
-        if (precompile)
-           Compile();
-        }
-     }
-}
-
-void cRegexp::FreeCompiled()
-{
-  if (re) {
-     pcre_free(re);
-     re = NULL;
-     }
-  if (sd) {
-#ifdef PCRE_CONFIG_JIT
-     pcre_free_study(sd);
-#else
-     pcre_free(sd);
-#endif
-     sd = NULL;
-     }
 }
 
 void cRegexp::Compile()
@@ -166,54 +49,186 @@ void cRegexp::Compile()
      }
 }
 
-cEpgfixerRegexps::cEpgfixerRegexps()
+void cRegexp::FreeCompiled()
 {
-  fileName = NULL;
-  regexps = new cRegexpList();
+  if (re) {
+     pcre_free(re);
+     re = NULL;
+     }
+  if (sd) {
+#ifdef PCRE_CONFIG_JIT
+     pcre_free_study(sd);
+#else
+     pcre_free(sd);
+#endif
+     sd = NULL;
+     }
 }
 
-cEpgfixerRegexps::~cEpgfixerRegexps()
+void cRegexp::SetFromString(char *s, bool Enabled)
 {
-  free(fileName);
-  delete regexps;
-}
-
-void cEpgfixerRegexps::SetRegexpConfigFile(const char *FileName)
-{
-  fileName = strdup(FileName);
-}
-
-const char *cEpgfixerRegexps::RegexpConfigFile()
-{
-  return fileName;
-}
-
-bool cEpgfixerRegexps::ReloadRegexps(bool AllowComments, bool Precompile)
-{
-  regexps->Clear();
-  return LoadRegexps(fileName, AllowComments, Precompile);
-}
-
-bool cEpgfixerRegexps::LoadRegexps(const char *FileName, bool AllowComments, bool Precompile)
-{
-  bool result = false;
-  if (FileName && access(FileName, F_OK) == 0) {
-     FILE *f = fopen(FileName, "r");
-     if (f) {
-        char *s;
-        cReadLine ReadLine;
-        while ((s = ReadLine.Read(f)) != NULL) {
-              if (!isempty(s)) {
-                 regexps->Add(new cRegexp());
-                 regexps->Last()->SetFromString(s, true, Precompile);
-                 }
-              }
-        fclose(f);
-        }
+  Free();
+  enabled = Enabled;
+  if (s[0] == '!')
+     string = strdup(s+1);
+  else
+     string = strdup(s);
+  bool compile = true;
+  if (s[0] == '!' || s[0] == '#') {
+     enabled = false;
+     compile = false;
+     }
+  char *p = (s[0] == '#') ? s : strchr(s, '=');
+  if (p) {
+     if (p[0] == '#')
+        source = REGEXP_UNDEFINED;
      else {
-        LOG_ERROR_STR(FileName);
-        result = false;
+        *p = 0;
+        regexp = strdup(p + 1);
+        char *chanfield = (s[0] == '!') ? s+1 : s;
+        char *field = chanfield;
+        char *f = strchr(chanfield, ':');
+        if (f) {
+           *f = 0;
+           field = f+1;
+           numchannels = loadChannelsFromString(chanfield, &channels_num, &channels_str);
+           }
+        if (strcmp(field, "title") == 0)
+           source = REGEXP_TITLE;
+        if (strcmp(field, "shorttext") == 0)
+           source = REGEXP_SHORTTEXT;
+        if (strcmp(field, "description") == 0)
+           source = REGEXP_DESCRIPTION;
+        if (compile)
+           Compile();
         }
      }
-  return result;
+}
+
+bool cRegexp::Apply(cEvent *Event)
+{
+  bool active = true;
+  if (numchannels > 0) {
+     bool found = false;
+     int i = 0;
+     while (i < numchannels && !found) {
+           if (Channels.GetByChannelID(Event->ChannelID())->Number() == GetChannelNum(i))
+              found = true;
+           if (GetChannelID(i) && strcmp(*(Event->ChannelID().ToString()), GetChannelID(i)) == 0)
+              found = true;
+           i++;
+           }
+     if (!found)
+        active = false;
+     }
+  if (active && enabled && re) {
+     char *tmpstring;
+     switch (source) {
+            case REGEXP_TITLE:
+              tmpstring = strdup(Event->Title());
+              break;
+            case REGEXP_SHORTTEXT:
+              if (Event->ShortText())
+                 tmpstring = strdup(Event->ShortText());
+              else
+                 tmpstring = strdup("");
+              break;
+            case REGEXP_DESCRIPTION:
+              if (Event->Description())
+                 tmpstring = strdup(Event->Description());
+              else
+                 tmpstring = strdup("");
+              break;
+            default:
+              tmpstring = strdup("");
+              break;
+            }
+     const char *string;
+     int ovector[20];
+     int rc;
+     rc = pcre_exec(re, sd, tmpstring, strlen(tmpstring), 0, 0, ovector, 20);
+     if (rc > 0) {
+        int i = 0;
+        while (i < 10) {
+          if (pcre_get_named_substring(re, tmpstring, ovector, rc, strBackrefs[i], &string) != PCRE_ERROR_NOSUBSTRING) {
+             char *tempstring = 0;
+             switch (i) {
+               case TITLE:
+                 Event->SetTitle(string);
+                 break;
+               case ATITLE:
+                 tempstring = (char *)malloc(strlen(Event->Title())+strlen(string)+1);
+                 strcpy(tempstring, Event->Title());
+                 strcat(tempstring, string);
+                 Event->SetTitle(tempstring);
+                 break;
+               case PTITLE:
+                 tempstring = (char *)malloc(strlen(Event->Title())+strlen(string)+1);
+                 strcpy(tempstring, string);
+                 strcat(tempstring, Event->Title());
+                 Event->SetTitle(tempstring);
+                 break;
+               case SHORTTEXT:
+                 Event->SetShortText(string);
+                 break;
+               case ASHORTTEXT:
+                 tempstring = (char *)malloc(strlen(Event->ShortText())+strlen(string)+1);
+                 strcpy(tempstring, Event->ShortText());
+                 strcat(tempstring, string);
+                 Event->SetShortText(tempstring);
+                 break;
+               case PSHORTTEXT:
+                 tempstring = (char *)malloc(strlen(Event->ShortText())+strlen(string)+1);
+                 strcpy(tempstring, string);
+                 strcat(tempstring, Event->ShortText());
+                 Event->SetShortText(tempstring);
+                 break;
+               case DESCRIPTION:
+                 Event->SetDescription(string);
+                 break;
+               case ADESCRIPTION:
+                 tempstring = (char *)malloc(strlen(Event->Description())+strlen(string)+1);
+                 strcpy(tempstring, Event->Description());
+                 strcat(tempstring, string);
+                 Event->SetDescription(tempstring);
+                 break;
+               case PDESCRIPTION:
+                 tempstring = (char *)malloc(strlen(Event->Description())+strlen(string)+1);
+                 strcpy(tempstring, string);
+                 strcat(tempstring, Event->Description());
+                 Event->SetDescription(tempstring);
+                 break;
+               case RATING:
+                 Event->SetParentalRating(atoi(string));
+                 break;
+               default:
+                 break;
+               }
+             pcre_free_substring(string);
+             free(tempstring);
+             }
+           i++;
+           }
+        free(tmpstring);
+        return true;
+        }
+     free(tmpstring);
+     }
+  return false;
+}
+
+void cRegexp::PrintConfigLineToFile(FILE *f)
+{
+  if (f) {
+     if (source == REGEXP_UNDEFINED)
+        fprintf(f, "%s\n", string);
+     else
+        fprintf(f, "%s%s\n", enabled ? "" : "!", string);
+     }
+}
+
+void cRegexp::ToggleEnabled(void)
+{
+  if (source != REGEXP_UNDEFINED)
+     enabled = enabled ? 0 : 1;
 }

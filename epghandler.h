@@ -9,14 +9,14 @@
 #define __EPGFIXER_EPGHANDLER_H
 
 #include <vdr/epg.h>
-#include "regexp.h"
 
 class cEpgfixerEpgHandler : public cEpgHandler
 {
 private:
-  bool ApplyRegexp(cRegexp *regexp, cEvent *Event, const char *input);
   void FixOriginalEpgBugs(cEvent *event);
+  bool FixCharSets(cEvent *Event);
   bool FixBugs(cEvent *Event);
+  void StripHTML(cEvent *Event);
 public:
   cEpgfixerEpgHandler(void) {};
   virtual bool FixEpgBugs(cEvent *Event);

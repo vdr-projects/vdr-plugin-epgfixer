@@ -25,16 +25,17 @@ Requirements:
 
 Usage:
 
+General syntax of configuration files:
+- Lines beginning with # are regarded as comments.
+- Lines beginning with ! are regarded as disabled lines.
+- Channel_list is optional comma separated list of channels for which the line
+  is used. If no list of channels is given the line is used for all channels.
+- Channel_list can contain either channel IDs (e.g. S19.2E-1-1089-12003-0) or
+  numbers but not both.
+
 All regular expressions are placed to VDRPLUGINCONFDIR/epgfixer/regexp.conf.
 
 Syntax of regexp.conf line is "Channel_list:Parsed_epg_field=Regexp" with:
-- Lines beginning with # are regarded as comments.
-- Lines beginning with ! are regarded as disabled regular expressions.
-- Channel_list is optional comma separated list of channels for which the
-  regular expression is used. If no list of channels is given the regular
-  expression is used for all channels.
-- Channel_list for a regular expression can contain either channel IDs
-  (e.g. S19.2E-1-1089-12003-0) or numbers but not both.
 - Parsed_epg_field is the EPG field for which the regular expression is applied
   with available field names title, shorttext and description.
 - Regular expressions use named backreferences with either title, shorttext,
@@ -43,6 +44,12 @@ Syntax of regexp.conf line is "Channel_list:Parsed_epg_field=Regexp" with:
   back referenced string is either appended or prepended to the original
   content of the target EPG field, respectively.
 - Several regular expressions may be applied to same field.
+
+All character set conversions are placed to 
+VDRPLUGINCONFDIR/epgfixer/charset.conf.
+
+Syntax of charset.conf line is "Channel_list=OriginalCharSet" with:
+- OriginalCharSet is a name of a character set (e.g. iso8859-1).
 
 Examples of regexp.conf:
 

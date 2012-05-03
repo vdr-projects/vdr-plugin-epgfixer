@@ -22,6 +22,7 @@ cEpgfixerSetup::cEpgfixerSetup()
   equalshorttextanddescription = 0;
   nobackticks = 0;
   components = 0;
+  striphtml = 0;
 }
 
 cString cEpgfixerSetup::m_ProcessedArgs;
@@ -59,6 +60,7 @@ bool cEpgfixerSetup::SetupParse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "PreventEqualShortTextAndDescription")) equalshorttextanddescription = atoi(Value);
   else if (!strcasecmp(Name, "ReplaceBackticksWithSingleQuotes"))    nobackticks = atoi(Value);
   else if (!strcasecmp(Name, "FixStreamComponentDescriptions"))      components = atoi(Value);
+  else if (!strcasecmp(Name, "StripHTMLentities"))      			 striphtml = atoi(Value);
   else
      return false;
 

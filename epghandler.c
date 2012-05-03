@@ -7,15 +7,11 @@
 
 #include "epghandler.h"
 #include "config.h"
+#include "charset.h"
+#include "regexp.h"
 #include <vdr/tools.h>
 #include <string.h>
 
-#ifdef HAVE_PCREPOSIX
-#include <pcre.h>
-#endif
-
-typedef enum { ATITLE,PTITLE,TITLE,ASHORTTEXT,PSHORTTEXT,SHORTTEXT,ADESCRIPTION,PDESCRIPTION,DESCRIPTION,RATING } backrefs;
-const char *strBackrefs[] = { "atitle","ptitle","title","ashorttext","pshorttext","shorttext","adescription","pdescription","description","rating" };
 
 void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
 {
@@ -237,135 +233,66 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
      }
 }
 
-bool cEpgfixerEpgHandler::ApplyRegexp(cRegexp *regexp, cEvent *Event, const char *input)
-{
-  bool active = true;
-  if (regexp->NumChannels() > 0) {
-     bool found = false;
-     int i = 0;
-     while (i < regexp->NumChannels() && !found) {
-           if (Channels.GetByChannelID(Event->ChannelID())->Number() == regexp->GetChannelNum(i))
-              found = true;
-           if (regexp->GetChannelID(i) && strcmp(*(Event->ChannelID().ToString()), regexp->GetChannelID(i)) == 0)
-              found = true;
-           i++;
-           }
-     if (!found)
-        active = false;
-     }
-  if (active && regexp->Enabled() && regexp->GetRe()) {
-     const char *string;
-     int ovector[20];
-     int rc;
-     rc = pcre_exec(regexp->GetRe(), regexp->GetSd(), input, strlen(input), 0, 0, ovector, 20);
-     if (rc > 0) {
-        int i = 0;
-        while (i < 10) {
-          if (pcre_get_named_substring(regexp->GetRe(), input, ovector, rc, strBackrefs[i], &string) != PCRE_ERROR_NOSUBSTRING) {
-             char *tempstring = 0;
-             switch (i) {
-               case TITLE:
-                 Event->SetTitle(string);
-                 break;
-               case ATITLE:
-                 tempstring = (char *)malloc(strlen(Event->Title())+strlen(string)+1);
-                 strcpy(tempstring, Event->Title());
-                 strcat(tempstring, string);
-                 Event->SetTitle(tempstring);
-                 break;
-               case PTITLE:
-                 tempstring = (char *)malloc(strlen(Event->Title())+strlen(string)+1);
-                 strcpy(tempstring, string);
-                 strcat(tempstring, Event->Title());
-                 Event->SetTitle(tempstring);
-                 break;
-               case SHORTTEXT:
-                 Event->SetShortText(string);
-                 break;
-               case ASHORTTEXT:
-                 tempstring = (char *)malloc(strlen(Event->ShortText())+strlen(string)+1);
-                 strcpy(tempstring, Event->ShortText());
-                 strcat(tempstring, string);
-                 Event->SetShortText(tempstring);
-                 break;
-               case PSHORTTEXT:
-                 tempstring = (char *)malloc(strlen(Event->ShortText())+strlen(string)+1);
-                 strcpy(tempstring, string);
-                 strcat(tempstring, Event->ShortText());
-                 Event->SetShortText(tempstring);
-                 break;
-               case DESCRIPTION:
-                 Event->SetDescription(string);
-                 break;
-               case ADESCRIPTION:
-                 tempstring = (char *)malloc(strlen(Event->Description())+strlen(string)+1);
-                 strcpy(tempstring, Event->Description());
-                 strcat(tempstring, string);
-                 Event->SetDescription(tempstring);
-                 break;
-               case PDESCRIPTION:
-                 tempstring = (char *)malloc(strlen(Event->Description())+strlen(string)+1);
-                 strcpy(tempstring, string);
-                 strcat(tempstring, Event->Description());
-                 Event->SetDescription(tempstring);
-                 break;
-               case RATING:
-                 Event->SetParentalRating(atoi(string));
-                 break;
-               default:
-                 break;
-               }
-             pcre_free_substring(string);
-             free(tempstring);
-             }
-           i++;
-           }
-        return true;
-        }
-     }
-  return false;
-}
-
 bool cEpgfixerEpgHandler::FixBugs(cEvent *Event)
 {
   int res = false;
-  char *tmpstring;
-  cRegexp *regex = (cRegexp *)EpgfixerRegexps.regexps->First();
+  cRegexp *regex = (cRegexp *)EpgfixerRegexps.First();
   while (regex) {
         if (regex->Enabled()) {
-           switch (regex->GetSource()) {
-             case REGEXP_TITLE:
-               tmpstring = strdup(Event->Title());
-               break;
-             case REGEXP_SHORTTEXT:
-               if (Event->ShortText())
-                  tmpstring = strdup(Event->ShortText());
-               else
-                  tmpstring = strdup("");
-               break;
-             case REGEXP_DESCRIPTION:
-               if (Event->Description())
-                  tmpstring = strdup(Event->Description());
-               else
-                  tmpstring = strdup("");
-               break;
-             default:
-               tmpstring = strdup("");
-               break;
-             }
-           int ret = ApplyRegexp(regex, Event, tmpstring);
+           int ret = regex->Apply(Event);
            if (ret && !res)
               res = true;
-           free(tmpstring);
            }
         regex = (cRegexp *)regex->Next();
         }
   return res;
 }
 
+bool cEpgfixerEpgHandler::FixCharSets(cEvent *Event)
+{
+  int res = false;
+  cCharSet *charset = (cCharSet *)EpgfixerCharSets.First();
+  while (charset) {
+        if (charset->Enabled()) {
+           int ret = charset->ConvertCharSet(Event);
+           if (ret && !res)
+              res = true;
+           }
+        charset = (cCharSet *)charset->Next();
+        }
+  return res;
+}
+
+void cEpgfixerEpgHandler::StripHTML(cEvent *Event)
+{
+  if (EpgfixerSetup.striphtml) {
+     char *tmpstring;
+     if (Event->Title())
+        tmpstring = strdup(Event->Title());
+     else
+        tmpstring = strdup("");
+     Event->SetTitle(striphtml(tmpstring));
+     free(tmpstring);
+     if (Event->ShortText())
+        tmpstring = strdup(Event->ShortText());
+     else
+        tmpstring = strdup("");
+     Event->SetShortText(striphtml(tmpstring));
+     free(tmpstring);
+     if (Event->Description())
+        tmpstring = strdup(Event->Description());
+     else
+        tmpstring = strdup("");
+     Event->SetDescription(striphtml(tmpstring));
+     free(tmpstring);
+     }
+}
+
 bool cEpgfixerEpgHandler::FixEpgBugs(cEvent *Event)
 {
   FixOriginalEpgBugs(Event);
+  FixCharSets(Event);
+  StripHTML(Event);
   FixBugs(Event);
   return false;
 }
