@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef _EPGFIXER_CONFIG_H_
-#define _EPGFIXER_CONFIG_H_
+#ifndef __EPGFIXER_CONFIG_H_
+#define __EPGFIXER_CONFIG_H_
 
 #include "regexp.h"
 
@@ -36,4 +36,4 @@ protected:
 // Global instance
 extern cEpgfixerSetup EpgfixerSetup;
 
-#endif //_EPGFIXER_CONFIG_H_
+#endif //__EPGFIXER_CONFIG_H_

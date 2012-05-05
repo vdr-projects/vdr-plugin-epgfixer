@@ -152,41 +152,6 @@ char *striphtml(char *str)
   return NULL;
 }
 
-int count(const char *string, const char separator)
-{
-  int num = 0;
-  while (string) {
-        num++;
-        string = strchr(string+1, separator);
-        }
-  return num;
-}
-
-int loadChannelsFromString(const char *string, int **channels_num, char ***channels_str)
-{
-  int numchannels = count(string, ',');
-  if (numchannels > 0) {
-     char *c = strdup(string);
-     // Use channel numbers
-     if (atoi(string))
-        *channels_num = (int *)malloc(sizeof(int)*numchannels);
-     else// use channel IDs
-        *channels_str = (char **)malloc(sizeof(char *)*numchannels);
-     int i = 0;
-     char *pc = strtok(c, ",");
-     while (i < numchannels) {
-           // Use channel numbers
-           if (atoi(string))
-              (*channels_num)[i] = atoi(pc);
-           else// use channel IDs
-              (*channels_str)[i] = strdup(pc);
-           pc = strtok(NULL, ",");
-           i++;
-           }
-     }
-  return numchannels;
-}
-
 cListItem::cListItem()
 {
   enabled = false;
@@ -203,19 +168,18 @@ cListItem::~cListItem(void)
 
 void cListItem::Free(void)
 {
-  free(channels_num);
   if (channels_str) {
      int i = 0;
      while (i < numchannels) {
            free(channels_str[i]);
-           i++;
+           ++i;
            }
      }
-  free(channels_str);
-  free(string);
-  channels_num = NULL;
-  channels_str = NULL;
-  string = NULL;
+  FREE(channels_num);
+  FREE(channels_str);
+  FREE(string);
+  numchannels = 0;
+  enabled = false;
 }
 
 const char *cListItem::GetChannelID(int index)
@@ -231,10 +195,62 @@ int cListItem::GetChannelNum(int index)
   if (channels_num && index >= 0 && index < numchannels)
      return channels_num[index];
   else
-     return -1;
+     return 0;
+}
+
+bool cListItem::IsActive(tChannelID ChannelID)
+{
+  bool active = true;
+  if (numchannels > 0) {
+     bool found = false;
+     int i = 0;
+     while (i < numchannels) {
+           if ((Channels.GetByChannelID(ChannelID)->Number() == GetChannelNum(i)) || 
+               (GetChannelID(i) && strcmp(*(ChannelID.ToString()), GetChannelID(i)) == 0)) {
+              found = true;
+              break;
+              }
+           ++i;
+           }
+     if (!found)
+        active = false;
+     }
+  return active;
+}
+
+int cListItem::LoadChannelsFromString(const char *string)
+{
+  numchannels = 0;
+  char *tmpstring = strdup(string);
+  char *c = tmpstring;
+  while (c) {
+        ++numchannels;
+        c = strchr(c+1, ',');
+        }
+  if (numchannels > 0) {
+     char *c = tmpstring;
+     // Use channel numbers
+     if (atoi(string))
+        channels_num = (int *)malloc(sizeof(int)*numchannels);
+     else// use channel IDs
+        channels_str = (char **)malloc(sizeof(char *)*numchannels);
+     int i = 0;
+     char *pc = strtok(c, ",");
+     while (i < numchannels) {
+           // Use channel numbers
+           if (atoi(string))
+              (channels_num)[i] = atoi(pc);
+           else// use channel IDs
+              (channels_str)[i] = strdup(pc);
+           pc = strtok(NULL, ",");
+           ++i;
+           }
+     }
+  free(tmpstring);
+  return numchannels;
 }
 
 void cListItem::ToggleEnabled(void)
 {
-  enabled = enabled ? 0 : 1;
+  enabled = !enabled;
 }

@@ -35,7 +35,7 @@ private:
           lines[i] = (char *)malloc(sizeof(char)*MAXREGEXPLENGTH);
           snprintf(lines[i], MAXREGEXPLENGTH, "%s", item->GetString());
           item = (T *)item->Next();
-          i++;
+          ++i;
           }
   }
   void FreeArray()
@@ -43,9 +43,9 @@ private:
     int i = 0;
     while (i < list->Count()) {
           free(lines[i]);
-          i++;
+          ++i;
           }
-    free(lines);
+    FREE(lines);
   }
   void Save()
   {
@@ -71,7 +71,7 @@ protected:
     while (i < list->Count()) {
           item->SetFromString(lines[i], item->Enabled());
           item = (T *)item->Next();
-          i++;
+          ++i;
           }
   }
   void Set(void)
@@ -82,7 +82,7 @@ protected:
     while (i < list->Count()) {
           Add(new cMenuEditStrItem(item->Enabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, RegexpChars));
           item = (T *)item->Next();
-          i++;
+          ++i;
           }
     SetHelp(tr("Toggle state"), tr("Add"), tr("Delete"), tr("Cancel"));
     Display();

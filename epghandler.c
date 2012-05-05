@@ -156,7 +156,7 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // apparently have no idea of how to set correctly:
   const cComponents *components = event->Components();
   if (EpgfixerSetup.components && components) {
-     for (int i = 0; i < components->NumComponents(); i++) {
+     for (int i = 0; i < components->NumComponents(); ++i) {
          tComponent *p = components->Component(i);
          switch (p->stream) {
            case 0x01: { // video
@@ -225,7 +225,7 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
      free(temp);
      }
   if (components) {
-     for (int i = 0; i < components->NumComponents(); i++) {
+     for (int i = 0; i < components->NumComponents(); ++i) {
          tComponent *p = components->Component(i);
          if (p->description)
             strreplace(p->description, '\n', ' ');
@@ -235,56 +235,27 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
 
 bool cEpgfixerEpgHandler::FixBugs(cEvent *Event)
 {
-  int res = false;
-  cRegexp *regex = (cRegexp *)EpgfixerRegexps.First();
-  while (regex) {
-        if (regex->Enabled()) {
-           int ret = regex->Apply(Event);
-           if (ret && !res)
-              res = true;
-           }
-        regex = (cRegexp *)regex->Next();
-        }
-  return res;
+  return EpgfixerRegexps.Apply(Event);
 }
 
 bool cEpgfixerEpgHandler::FixCharSets(cEvent *Event)
 {
-  int res = false;
-  cCharSet *charset = (cCharSet *)EpgfixerCharSets.First();
-  while (charset) {
-        if (charset->Enabled()) {
-           int ret = charset->ConvertCharSet(Event);
-           if (ret && !res)
-              res = true;
-           }
-        charset = (cCharSet *)charset->Next();
-        }
-  return res;
+  return EpgfixerCharSets.Apply(Event);
 }
 
 void cEpgfixerEpgHandler::StripHTML(cEvent *Event)
 {
   if (EpgfixerSetup.striphtml) {
-     char *tmpstring;
-     if (Event->Title())
-        tmpstring = strdup(Event->Title());
-     else
-        tmpstring = strdup("");
+     char *tmpstring = NULL;
+     tmpstring = Event->Title() ? strdup(Event->Title()) : NULL;
      Event->SetTitle(striphtml(tmpstring));
-     free(tmpstring);
-     if (Event->ShortText())
-        tmpstring = strdup(Event->ShortText());
-     else
-        tmpstring = strdup("");
+     FREE(tmpstring);
+     tmpstring = Event->ShortText() ? strdup(Event->ShortText()) : NULL;
      Event->SetShortText(striphtml(tmpstring));
-     free(tmpstring);
-     if (Event->Description())
-        tmpstring = strdup(Event->Description());
-     else
-        tmpstring = strdup("");
+     FREE(tmpstring);
+     tmpstring = Event->Description() ? strdup(Event->Description()) : NULL;
      Event->SetDescription(striphtml(tmpstring));
-     free(tmpstring);
+     FREE(tmpstring);
      }
 }
 

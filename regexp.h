@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef _REGEXP_H_
-#define _REGEXP_H_
+#ifndef __EPGFIXER_REGEXP_H_
+#define __EPGFIXER_REGEXP_H_
 
 #include "tools.h"
 #include <vdr/epg.h>
@@ -31,7 +31,7 @@ private:
 public:
   cRegexp();
   virtual ~cRegexp();
-  bool Apply(cEvent *Event);
+  virtual bool Apply(cEvent *Event);
   void SetFromString(char *string, bool Enabled);
   int GetSource() { return source; };
   void ToggleEnabled(void);
@@ -41,4 +41,4 @@ public:
 // Global instance
 extern cEpgfixerList<cRegexp> EpgfixerRegexps;
 
-#endif //_REGEXP_H_
+#endif //__EPGFIXER_REGEXP_H_

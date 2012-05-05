@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef _CHARSET_H_
-#define _CHARSET_H_
+#ifndef __EPGFIXER_CHARSET_H_
+#define __EPGFIXER_CHARSET_H_
 
 #include "tools.h"
 #include <vdr/epg.h>
@@ -20,7 +20,7 @@ private:
 public:
   cCharSet();
   virtual ~cCharSet();
-  bool ConvertCharSet(cEvent *Event);
+  virtual bool Apply(cEvent *Event);
   void SetFromString(char *string, bool Enabled);
   virtual void PrintConfigLineToFile(FILE *f);
 };
@@ -28,4 +28,4 @@ public:
 // Global instance
 extern cEpgfixerList<cCharSet> EpgfixerCharSets;
 
-#endif //_REGEXP_H_
+#endif //__EPGFIXER_CHARSET_H_

@@ -21,23 +21,9 @@ cCharSet::~cCharSet(void)
   free(charset);
 }
 
-bool cCharSet::ConvertCharSet(cEvent *Event)
+bool cCharSet::Apply(cEvent *Event)
 {
-  bool active = true;
-  if (numchannels > 0) {
-     bool found = false;
-     int i = 0;
-     while (i < numchannels && !found) {
-           if (Channels.GetByChannelID(Event->ChannelID())->Number() == GetChannelNum(i))
-              found = true;
-           if (GetChannelID(i) && strcmp(*(Event->ChannelID().ToString()), GetChannelID(i)) == 0)
-              found = true;
-           i++;
-           }
-     if (!found)
-        active = false;
-     }
-  if (active && enabled) {
+  if (enabled && IsActive(Event->ChannelID())) {
      cCharSetConv conv(charset, cCharSetConv::SystemCharacterTable());
      Event->SetTitle(conv.Convert(Event->Title()));
      Event->SetShortText(conv.Convert(Event->ShortText()));
@@ -48,6 +34,7 @@ bool cCharSet::ConvertCharSet(cEvent *Event)
 
 void cCharSet::SetFromString(char *s, bool Enabled)
 {
+  FREE(charset);
   Free();
   enabled = Enabled;
   if (s[0] == '!')
@@ -56,14 +43,17 @@ void cCharSet::SetFromString(char *s, bool Enabled)
      string = strdup(s);
   if (s[0] == '!' || s[0] == '#')
      enabled = false;
-  char *p = (s[0] == '#') ? s : strchr(s, '=');
+  char *p = (s[0] == '#') ? NULL : s;
   if (p) {
-     if (p[0] != '#') {
-        *p = 0;
-        charset = strdup(p + 1);
-        char *chans = (s[0] == '!') ? s+1 : s;
-        numchannels = loadChannelsFromString(chans, &channels_num, &channels_str);
+     char *p = (s[0] == '!') ? s+1 : s;
+     char *f = strchr(p, ':');
+     if (f) {
+        *f = 0;
+        charset = strdup(f + 1);
+        numchannels = LoadChannelsFromString(p);
         }
+     else
+        charset = strdup(p);
      }
 }
 

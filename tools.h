@@ -5,16 +5,17 @@
  *
  */
 
-#ifndef _STRINGTOOLS_H_
-#define _STRINGTOOLS_H_
+#ifndef __EPGFIXER_STRINGTOOLS_H_
+#define __EPGFIXER_STRINGTOOLS_H_
 
+#include <vdr/epg.h>
 #include <vdr/tools.h>
 #include <unistd.h>
 #include <stdio.h>
 
+#define FREE(x) { free(x); x = NULL; }
+
 char *striphtml(char *str);
-int count(const char *string, const char separator);
-int loadChannelsFromString(const char *string, int **channels_num, char ***channels_str);
 
 class cListItem : public cListObject
 {
@@ -27,14 +28,16 @@ protected:
   void Free();
   const char *GetChannelID(int index);
   int GetChannelNum(int index);
+  int LoadChannelsFromString(const char *string);
+  bool IsActive(tChannelID ChannelID);
 public:
   cListItem();
   virtual ~cListItem();
+  virtual bool Apply(cEvent *Event) { return 0; }
   void SetFromString(char *string, bool Enabled);
   const char *GetString() { return string; }
   bool Enabled(void) { return enabled; }
   void ToggleEnabled(void);
-  int NumChannels() { return numchannels; }
   virtual void PrintConfigLineToFIle(FILE *f) {}
 };
 
@@ -75,8 +78,22 @@ public:
     Clear();
     return LoadConfigFile(fileName, AllowComments);
   }
+  bool Apply(cEvent *Event)
+  {
+    int res = false;
+    T *item = (T *)(cList<T>::First());
+    while (item) {
+          if (item->Enabled()) {
+             int ret = item->Apply(Event);
+             if (ret && !res)
+                res = true;
+             }
+          item = (T *)(item->Next());
+          }
+    return res;
+  }
   void SetConfigFile(const char *FileName) { fileName = strdup(FileName); }
   const char *GetConfigFile() { return fileName; }
 };
 
-#endif //_STRINGTOOLS_H_
+#endif //__EPGFIXER_STRINGTOOLS_H_

@@ -48,7 +48,7 @@ Syntax of regexp.conf line is "Channel_list:Parsed_epg_field=Regexp" with:
 All character set conversions are placed to 
 VDRPLUGINCONFDIR/epgfixer/charset.conf.
 
-Syntax of charset.conf line is "Channel_list=OriginalCharSet" with:
+Syntax of charset.conf line is "Channel_list:OriginalCharSet" with:
 - OriginalCharSet is a name of a character set (e.g. iso8859-1).
 
 Examples of regexp.conf:
@@ -61,6 +61,17 @@ Examples of regexp.conf:
 1,3,5:title=^(?:Movie: |Document: )(?<title>.*)$
 
 # Move parental rating from end of title to correct EPG field:
+# Program title (12)
 title=^(?<title>.*)[ ][(](?<rating>[0-9S]{1,2})[)][ ]*$
 
+
+Examples of charset.conf:
+
+# Convert character set of channels 1, 2 and 3 from iso8859-1 to character set
+# used by VDR
+1,2,3:iso8859-1
+
+# Convert character set of all channels from iso8859-1 to character set 
+# used by VDR
+iso8859-1
 

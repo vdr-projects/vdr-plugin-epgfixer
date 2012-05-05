@@ -16,7 +16,7 @@
 #error "VDR-1.7.26 API version or greater is required!"
 #endif
 
-static const char *VERSION        = "0.0.6";
+static const char *VERSION        = "0.0.7";
 static const char *DESCRIPTION    = trNOOP("Fix bugs in EPG");
 
 class cPluginEpgfixer : public cPlugin {
