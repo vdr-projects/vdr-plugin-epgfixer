@@ -1,6 +1,6 @@
 VDR Plugin 'epgfixer' Revision History
 --------------------------------------
-2012-xx-xx: Version 0.0.7
+2012-05-05: Version 0.1.0
 
 - Support for character set conversion for selected channels.
 - Support for stripping HTML entities.

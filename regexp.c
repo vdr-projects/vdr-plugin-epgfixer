@@ -38,13 +38,13 @@ void cRegexp::Compile()
   int erroffset;
   re = pcre_compile(regexp, 0, &error, &erroffset, NULL);
   if (error) {
-     esyslog("PCRE compile error: %s at offset %i", error, erroffset);
+     error("PCRE compile error: %s at offset %i", error, erroffset);
      enabled = false;
      }
   else {
      sd = pcre_study(re, 0, (const char **)&error);
      if (error)
-        esyslog("PCRE study error: %s", error);
+        error("PCRE study error: %s", error);
      }
 }
 

@@ -114,7 +114,7 @@ static char *htmlcharconv(char *str, struct conv_table *conv, unsigned int elem)
            size_t l1 = strlen(conv[i].from);
            size_t l2 = strlen(conv[i].to);
            if (l2 > l1) {
-              esyslog("htmlcharconv(): cannot reallocate string");
+              error("htmlcharconv(): cannot reallocate string");
               return str;
               }
            if (l2 != l1)

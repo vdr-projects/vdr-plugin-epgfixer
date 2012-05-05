@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: vdr-epgfixer 0.0.3\n"
+"Project-Id-Version: vdr-epgfixer 0.1.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2012-05-05 15:17+0300\n"
-"PO-Revision-Date: 2012-05-03 22:20+0300\n"
+"POT-Creation-Date: 2012-05-05 19:01+0300\n"
+"PO-Revision-Date: 2012-05-05 18:25+0300\n"
 "Last-Translator: Matti Lehtimäki <matti.lehtimaki@gmail.com>\n"
 "Language-Team: Finnish <vdr@linuxtv.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,16 +19,10 @@ msgstr ""
 msgid "Fix bugs in EPG"
 msgstr "Korjaa virheitä EPG:ssä"
 
-msgid "Toggle state"
-msgstr "Vaihda tila"
+msgid " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#"
+msgstr " abcdefghijklmnopqrstuvwxyzåäöABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ0123456789%~\\/?!()[]{}<>$^*.,:;-=#"
 
-msgid "Add"
-msgstr "Lisää"
-
-msgid "Delete"
-msgstr "Poista"
-
-msgid "Cancel"
+msgid "Button$Cancel"
 msgstr "Peru"
 
 msgid "Regular expressions"
@@ -42,6 +36,9 @@ msgstr "Merkistömuunnokset"
 
 msgid "Edit character set conversions."
 msgstr "Muokkaa merkistömuunnoksia."
+
+msgid "--- EPG bugfixes ---"
+msgstr "--- EPG korjaukset ---"
 
 msgid "Remove quotes from ShortText"
 msgstr "Poista lainaukset lyhyestä kuvauksesta"
@@ -94,7 +91,7 @@ msgid ""
 "Title\n"
 "\"ShortText\"[.]"
 msgstr ""
-"Ohjelmaoppaan korjaustaso >= 1: Jotkin kanavat laittavat lyhyen kuvausksen lainusmerkkeihin, mikä oli ärsyttävää (jotkut jopa laittavat '.' viimeisen '\"' jälkeen):\n"
+"Ohjelmaoppaan korjaustaso >= 1: Jotkin kanavat laittavat lyhyen kuvausksen lainausmerkkeihin, mikä oli ärsyttävää (jotkut jopa laittavat '.' viimeisen '\"' jälkeen):\n"
 "\n"
 "Otsikko\n"
 "\"Lyhyt kuvaus\"[.]"
@@ -121,7 +118,7 @@ msgid "Replace backticks with single quotes"
 msgstr "Korvaa gravis heittomerkillä"
 
 msgid "EPG bugfix level >= 2: Some channels use the ` (\"backtick\") character, where a ' (single quote) would be normally used. Actually, \"backticks\" in normal text don't make much sense, so let's replace them."
-msgstr "Ohjelmaoppaan korjaustaso >= 2: Jotkin kanavat käyttävät ` (gravis) merkkiä ' (lainausmerkki) sijaan. Itse asiassa gravis ei ole järkevä normaalissa tekstissä, joten korvataan ne."
+msgstr "Ohjelmaoppaan korjaustaso >= 2: Jotkin kanavat käyttävät ` (gravis) merkkiä ' (heittomerkki) sijaan. Itse asiassa gravis ei ole järkevä normaalissa tekstissä, joten korvataan ne."
 
 msgid "Fix stream component descriptions"
 msgstr "Korjaa lähetekomponenttien kuvaukset"
@@ -135,11 +132,17 @@ msgstr "Poista HTML-merkit"
 msgid "Convert HTML entities from all fields to matching regular characters."
 msgstr "Korvaa HTML merkit kaikista kentistä normaaleilla merkeillä."
 
-msgid "Reload files"
-msgstr "Lataa uudelleen tiedostot"
+msgid "Button$Load"
+msgstr "Lataa"
 
-msgid "Clear EPG data"
-msgstr "Tyhjennä EPG tiedot"
+msgid "Button$Clear EPG"
+msgstr "Tyhjennä EPG"
+
+msgid "Loading configuration files..."
+msgstr "Ladataan asetustiedostoja..."
+
+msgid "Clearing EPG data..."
+msgstr "Tyhjennetään EPG tietoja..."
 
 msgid "Help"
 msgstr "Ohje"

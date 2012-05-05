@@ -17,7 +17,7 @@
 #define MAXREGEXPLENGTH 512
 
 const char *RegexpChars = 
-  " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#";
+  trNOOP(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#");
 
 template<class T> class cMenuSetupConfigEditor : public cMenuSetupPage
 {
@@ -80,11 +80,11 @@ protected:
     int i = 0;
     T *item = (T *)list->First();
     while (i < list->Count()) {
-          Add(new cMenuEditStrItem(item->Enabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, RegexpChars));
+          Add(new cMenuEditStrItem(item->Enabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, tr(RegexpChars)));
           item = (T *)item->Next();
           ++i;
           }
-    SetHelp(tr("Toggle state"), tr("Add"), tr("Delete"), tr("Cancel"));
+    SetHelp(trVDR("Button$On/Off"), trVDR("Button$New"), trVDR("Button$Delete"), tr("Button$Cancel"));
     Display();
   }
 public:
@@ -167,6 +167,9 @@ void cMenuSetupEpgfixer::Set(void)
   Add(new cOsdItem(tr("Character set conversions"), osUser2));
   help.Append(tr("Edit character set conversions."));
 
+  Add(new cOsdItem(tr("--- EPG bugfixes ---"), osUnknown, false));
+  help.Append("");
+
   Add(new cMenuEditBoolItem(tr("Remove quotes from ShortText"),
                             &newconfig.quotedshorttext));
   help.Append(tr("EPG bugfix level >= 1: Some channels put the ShortText in quotes and use either the ShortText or the Description field, depending on how long the string is:\n\nTitle\n\"ShortText\". Description"));
@@ -197,7 +200,7 @@ void cMenuSetupEpgfixer::Set(void)
   Add(new cMenuEditBoolItem(tr("Strip HTML entities"),
                             &newconfig.striphtml));
   help.Append(tr("Convert HTML entities from all fields to matching regular characters."));
-  SetHelp(tr("Reload files"),NULL,NULL, tr("Clear EPG data"));
+  SetHelp(tr("Button$Load"),NULL,NULL, tr("Button$Clear EPG"));
   Display();
 }
 
@@ -226,14 +229,18 @@ eOSState cMenuSetupEpgfixer::ProcessKey(eKeys Key)
   if (state == osUnknown) {
      switch (Key) {
        case kRed:
+         Skins.Message(mtInfo, tr("Loading configuration files..."));
          EpgfixerRegexps.ReloadConfigFile();
          EpgfixerCharSets.ReloadConfigFile();
+         Skins.Message(mtInfo, NULL);
          state = osContinue;
          break;
        case kBlue:
+         Skins.Message(mtInfo, tr("Clearing EPG data..."));
          cEitFilter::SetDisableUntil(time(NULL) + 10);
          if (cSchedules::ClearAll())
             cEitFilter::SetDisableUntil(time(NULL) + 10);
+         Skins.Message(mtInfo, NULL);
          state = osContinue;
          break;
        case kInfo:

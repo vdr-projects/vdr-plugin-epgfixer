@@ -5,13 +5,15 @@
  *
  */
 
-#ifndef __EPGFIXER_STRINGTOOLS_H_
-#define __EPGFIXER_STRINGTOOLS_H_
+#ifndef __EPGFIXER_TOOLS_H_
+#define __EPGFIXER_TOOLS_H_
 
 #include <vdr/epg.h>
 #include <vdr/tools.h>
 #include <unistd.h>
 #include <stdio.h>
+
+#define error(x...) esyslog("EPGFixer: " x);
 
 #define FREE(x) { free(x); x = NULL; }
 
@@ -96,4 +98,4 @@ public:
   const char *GetConfigFile() { return fileName; }
 };
 
-#endif //__EPGFIXER_STRINGTOOLS_H_
+#endif //__EPGFIXER_TOOLS_H_
