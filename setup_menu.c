@@ -161,29 +161,42 @@ cMenuSetupEpgfixer::cMenuSetupEpgfixer(void)
 void cMenuSetupEpgfixer::Set(void)
 {
   Clear();
+  help.Clear();
   Add(new cOsdItem(tr("Regular expressions"), osUser1));
+  help.Append(tr("Edit regular expressions."));
   Add(new cOsdItem(tr("Character set conversions"), osUser2));
+  help.Append(tr("Edit character set conversions."));
 
   Add(new cMenuEditBoolItem(tr("Remove quotes from ShortText"),
                             &newconfig.quotedshorttext));
-  Add(new cMenuEditBoolItem(tr("Move Description from ShortText"),
+  help.Append(tr("EPG bugfix level >= 1: Some channels put the ShortText in quotes and use either the ShortText or the Description field, depending on how long the string is:\n\nTitle\n\"ShortText\". Description"));
+  Add(new cMenuEditBoolItem(tr("Move Description from ShortText."),
                             &newconfig.blankbeforedescription));
+  help.Append(tr("EPG bugfix level >= 1: Some channels put the Description into the ShortText (preceded by a blank) if there is no actual ShortText and the Description is short enough:\n\nTitle\n Description"));
   Add(new cMenuEditBoolItem(tr("Remove repeated title from ShortText"),
                             &newconfig.repeatedtitle));
+  help.Append(tr("EPG bugfix level >= 1: Sometimes they repeat the Title in the ShortText:\n\nTitle\nTitle"));
   Add(new cMenuEditBoolItem(tr("Remove double quotes from ShortText"),
                             &newconfig.doublequotedshorttext));
+  help.Append(tr("EPG bugfix level >= 1: Some channels put the ShortText between double quotes, which is nothing but annoying (some even put a '.' after the closing '\"'):\n\nTitle\n\"ShortText\"[.]"));
   Add(new cMenuEditBoolItem(tr("Remove useless formatting"),
                             &newconfig.removeformatting));
+  help.Append(tr("EPG bugfix level >= 2: Some channels apparently try to do some formatting in the texts, which is a bad idea because they have no way of knowing the width of the window that will actually display the text. Remove excess whitespace."));
   Add(new cMenuEditBoolItem(tr("Move long ShortText to Description"),
                             &newconfig.longshorttext));
+  help.Append(tr("EPG bugfix level >= 2: Some channels put a whole lot of information in the ShortText and leave the Description totally empty. So if the ShortText length exceeds 40, let's put this into the Description instead."));
   Add(new cMenuEditBoolItem(tr("Prevent equal ShortText and Description"),
                             &newconfig.equalshorttextanddescription));
+  help.Append(tr("EPG bugfix level >= 2: Some channels put the same information into ShortText and Description. In that case we delete one of them."));
   Add(new cMenuEditBoolItem(tr("Replace backticks with single quotes"),
                             &newconfig.nobackticks));
+  help.Append(tr("EPG bugfix level >= 2: Some channels use the ` (\"backtick\") character, where a ' (single quote) would be normally used. Actually, \"backticks\" in normal text don't make much sense, so let's replace them."));
   Add(new cMenuEditBoolItem(tr("Fix stream component descriptions"),
                             &newconfig.components));
+  help.Append(tr("EPG bugfix level = 3: The stream components have a \"description\" field which some channels apparently have no idea of how to set correctly."));
   Add(new cMenuEditBoolItem(tr("Strip HTML entities"),
                             &newconfig.striphtml));
+  help.Append(tr("Convert HTML entities from all fields to matching regular characters."));
   SetHelp(tr("Reload files"),NULL,NULL, tr("Clear EPG data"));
   Display();
 }
@@ -222,6 +235,10 @@ eOSState cMenuSetupEpgfixer::ProcessKey(eKeys Key)
          if (cSchedules::ClearAll())
             cEitFilter::SetDisableUntil(time(NULL) + 10);
          state = osContinue;
+         break;
+       case kInfo:
+         if (Current() < help.Size())
+            return AddSubMenu(new cMenuText(cString::sprintf("%s - %s '%s'", tr("Help"), trVDR("Plugin"), PLUGIN_NAME_I18N), help[Current()]));
          break;
        default:
          break;

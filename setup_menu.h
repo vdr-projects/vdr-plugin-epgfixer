@@ -8,6 +8,7 @@
 #ifndef __EPGFIXER_SETUP_MENU_H
 #define __EPGFIXER_SETUP_MENU_H
 
+#include <vdr/menu.h>
 #include <vdr/menuitems.h>
 #include "config.h"
 
@@ -15,6 +16,7 @@ class cMenuSetupEpgfixer : public cMenuSetupPage
 {
 private:
   cEpgfixerSetup newconfig;
+  cVector<const char*> help;
 protected:
   virtual void Store(void);
   void Set(void);
