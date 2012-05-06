@@ -57,7 +57,7 @@ protected:
           cReadLine ReadLine;
           while ((s = ReadLine.Read(f)) != NULL) {
                 if (!isempty(s)) {
-                   Add(new T());
+                   this->Add(new T());
                    cList<T>::Last()->SetFromString(s, true);
                    }
                 }

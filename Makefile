@@ -12,7 +12,8 @@ PLUGIN = epgfixer
 
 ### The version number of this plugin (taken from the main source file):
 
-VERSION = $(shell grep 'static const char \*VERSION *=' $(PLUGIN).c | awk '{ print $$6 }' | sed -e 's/[";]//g')
+VERSION = $(shell grep 'static const char VERSION\[\] *=' $(PLUGIN).c | awk '{ print $$6 }' | sed -e 's/[";]//g')
+GITTAG  = $(shell git describe --always 2>/dev/null)
 
 ### The C++ compiler and options:
 
@@ -54,6 +55,10 @@ PACKAGE = vdr-$(ARCHIVE)
 INCLUDES += -I$(VDRDIR)/include
 
 DEFINES += -D_GNU_SOURCE -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
+
+ifneq ($(strip $(GITTAG)),)
+DEFINES += -DGITVERSION='"-GIT-$(GITTAG)"'
+endif
 
 ### The object files (add further files here):
 
@@ -126,5 +131,4 @@ clean:
 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ $(PODIR)/*.mo $(PODIR)/*.pot
 
 cppcheck: $(OBJS)
-    @cppcheck --enable=information,style,unusedFunction -v -f $(OBJS:%.o=%.c)
-
+	@cppcheck --enable=information,style,unusedFunction -v -f $(OBJS:%.o=%.c)
