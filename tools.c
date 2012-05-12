@@ -198,29 +198,21 @@ cAddEventThread::~cAddEventThread(void)
 void cAddEventThread::Action(void)
 {
   SetPriority(19);
-  cList<cAddEventListItem> *tmplist = new cList<cAddEventListItem>;
   while (Running() && !LastHandleEvent.TimedOut()) {
+     cAddEventListItem *e = NULL;
+     cSchedulesLock SchedulesLock(true, 10);
+     cSchedules *schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
      Lock();
-     cAddEventListItem *e = list->First();
-     while (e) {
-           tmplist->Add(new cAddEventListItem(e->GetEvent(), e->GetChannelID()));
+     while (schedules && (e = list->First()) != NULL) {
+           cSchedule *schedule = (cSchedule *)schedules->GetSchedule(Channels.GetByChannelID(e->GetChannelID()), true);
+           schedule->AddEvent(e->GetEvent());
+           EpgHandlers.SortSchedule(schedule);
+           EpgHandlers.DropOutdated(schedule, e->GetEvent()->StartTime(), e->GetEvent()->EndTime(), e->GetEvent()->TableID(), e->GetEvent()->Version());
            list->Del(e);
-           e = list->First();
            }
      Unlock();
-     e = tmplist->First();
-     while (e) {
-           cSchedulesLock SchedulesLock(true, 10);
-           cSchedules *schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
-           if (schedules) {
-              ((cSchedule *)schedules->GetSchedule(Channels.GetByChannelID(e->GetChannelID()), true))->AddEvent(e->GetEvent());
-              tmplist->Del(e);
-              }
-           e = tmplist->First();
-           }
      cCondWait::SleepMs(10);
      }
-  delete tmplist;
 }
 
 void cAddEventThread::AddEvent(cEvent *Event, tChannelID ChannelID)
