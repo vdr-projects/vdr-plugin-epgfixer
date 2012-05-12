@@ -182,9 +182,8 @@ public:
 };
 
 cAddEventThread::cAddEventThread(void)
-:cThread("add events to schedule")
+:cThread("cAddEventThread"), LastHandleEvent()
 {
-  LastHandleEvent = time(NULL);
   list = new cList<cAddEventListItem>;
 }
 
@@ -218,8 +217,8 @@ void cAddEventThread::Action(void)
 void cAddEventThread::AddEvent(cEvent *Event, tChannelID ChannelID)
 {
   LOCK_THREAD;
-  LastHandleEvent.Set(INSERT_TIMEOUT_IN_MS);
   list->Add(new cAddEventListItem(Event, ChannelID));
+  LastHandleEvent.Set(INSERT_TIMEOUT_IN_MS);
 }
 
 static cAddEventThread AddEventThread;
@@ -228,9 +227,9 @@ static cAddEventThread AddEventThread;
 
 void AddEvent(cEvent *Event, tChannelID ChannelID)
 {
+  AddEventThread.AddEvent(Event, ChannelID);
   if (!AddEventThread.Active())
      AddEventThread.Start();
-  AddEventThread.AddEvent(Event, ChannelID);
 }
 
 // --- Listitem ----------------------------------------
