@@ -8,21 +8,23 @@
 #include "setup_menu.h"
 #include <vdr/config.h>
 #include <vdr/i18n.h>
-#include "tools.h"
+#include "blacklist.h"
 #include "charset.h"
+#include "epgclone.h"
 #include "regexp.h"
+#include "tools.h"
 
 //--- cMenuSetupConfigEditor ------------------------------------------------------
 
 #define MAXREGEXPLENGTH 512
 
-const char *RegexpChars = 
-  trNOOP(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#");
+const char *RegexpChars =
+  trNOOP("RegexpChars$ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#");
 
-template<class T> class cMenuSetupConfigEditor : public cMenuSetupPage
+template<class LISTITEM, class PARAMETER> class cMenuSetupConfigEditor : public cMenuSetupPage
 {
 private:
-  cEpgfixerList<T> *list;
+  cEpgfixerList<LISTITEM, PARAMETER> *list;
   const char *fileName;
   char **lines;
   char **numlines;
@@ -30,11 +32,11 @@ private:
   {
     lines = (char **)malloc(sizeof(char *)*(list->Count()));
     int i = 0;
-    T *item = (T *)list->First();
+    LISTITEM *item = (LISTITEM *)list->First();
     while (item) {
           lines[i] = (char *)malloc(sizeof(char)*MAXREGEXPLENGTH);
           snprintf(lines[i], MAXREGEXPLENGTH, "%s", item->GetString());
-          item = (T *)item->Next();
+          item = (LISTITEM *)item->Next();
           ++i;
           }
   }
@@ -53,10 +55,10 @@ private:
     if (fileName && access(fileName, F_OK) == 0) {
        FILE *f = fopen(fileName, "w");
        if (f) {
-          T *item = (T *)list->First();
+          LISTITEM *item = (LISTITEM *)list->First();
           while (item) {
                 item->PrintConfigLineToFile(f);
-                item = (T *)item->Next();
+                item = (LISTITEM *)item->Next();
                 }
           fclose(f);
           }
@@ -67,10 +69,10 @@ protected:
   {
     // Store regular expressions back to list
     int i = 0;
-    T *item = (T *)list->First();
+    LISTITEM *item = (LISTITEM *)list->First();
     while (i < list->Count()) {
           item->SetFromString(lines[i], item->Enabled());
-          item = (T *)item->Next();
+          item = (LISTITEM *)item->Next();
           ++i;
           }
   }
@@ -78,17 +80,17 @@ protected:
   {
     Clear();
     int i = 0;
-    T *item = (T *)list->First();
+    LISTITEM *item = (LISTITEM *)list->First();
     while (i < list->Count()) {
           Add(new cMenuEditStrItem(item->Enabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, tr(RegexpChars)));
-          item = (T *)item->Next();
+          item = (LISTITEM *)item->Next();
           ++i;
           }
     SetHelp(trVDR("Button$On/Off"), trVDR("Button$New"), trVDR("Button$Delete"), tr("Button$Cancel"));
     Display();
   }
 public:
-  cMenuSetupConfigEditor(cEpgfixerList<T> *l)
+  cMenuSetupConfigEditor(cEpgfixerList<LISTITEM, PARAMETER> *l)
   {
     list = l;
     cEitFilter::SetDisableUntil(time(NULL) + 1000);
@@ -117,7 +119,7 @@ public:
          case kGreen:
            Store();
            FreeArray();
-           list->Add(new T());
+           list->Add(new LISTITEM());
            LoadListToArray();
            Set();
            Display();
@@ -166,6 +168,10 @@ void cMenuSetupEpgfixer::Set(void)
   help.Append(tr("Edit regular expressions."));
   Add(new cOsdItem(tr("Character set conversions"), osUser2));
   help.Append(tr("Edit character set conversions."));
+  Add(new cOsdItem(tr("EPG blacklists"), osUser3));
+  help.Append(tr("Edit EPG blacklists."));
+  Add(new cOsdItem(tr("EPG cloning"), osUser4));
+  help.Append(tr("Edit EPG data cloning."));
 
   Add(new cOsdItem(tr("--- EPG bugfixes ---"), osUnknown, false));
   help.Append("");
@@ -173,7 +179,7 @@ void cMenuSetupEpgfixer::Set(void)
   Add(new cMenuEditBoolItem(tr("Remove quotes from ShortText"),
                             &newconfig.quotedshorttext));
   help.Append(tr("EPG bugfix level >= 1: Some channels put the ShortText in quotes and use either the ShortText or the Description field, depending on how long the string is:\n\nTitle\n\"ShortText\". Description"));
-  Add(new cMenuEditBoolItem(tr("Move Description from ShortText."),
+  Add(new cMenuEditBoolItem(tr("Move Description from ShortText"),
                             &newconfig.blankbeforedescription));
   help.Append(tr("EPG bugfix level >= 1: Some channels put the Description into the ShortText (preceded by a blank) if there is no actual ShortText and the Description is short enough:\n\nTitle\n Description"));
   Add(new cMenuEditBoolItem(tr("Remove repeated title from ShortText"),
@@ -232,6 +238,8 @@ eOSState cMenuSetupEpgfixer::ProcessKey(eKeys Key)
          Skins.Message(mtInfo, tr("Loading configuration files..."));
          EpgfixerRegexps.ReloadConfigFile();
          EpgfixerCharSets.ReloadConfigFile();
+         EpgfixerBlacklists.ReloadConfigFile();
+         EpgfixerEpgClones.ReloadConfigFile();
          Skins.Message(mtInfo, NULL);
          state = osContinue;
          break;
@@ -252,8 +260,12 @@ eOSState cMenuSetupEpgfixer::ProcessKey(eKeys Key)
        }
      }
   else if (state == osUser1)
-     return AddSubMenu(new cMenuSetupConfigEditor<cRegexp>(&EpgfixerRegexps));
+     return AddSubMenu(new cMenuSetupConfigEditor<cRegexp, cEvent>(&EpgfixerRegexps));
   else if (state == osUser2)
-     return AddSubMenu(new cMenuSetupConfigEditor<cCharSet>(&EpgfixerCharSets));
+     return AddSubMenu(new cMenuSetupConfigEditor<cCharSet, cEvent>(&EpgfixerCharSets));
+  else if (state == osUser3)
+     return AddSubMenu(new cMenuSetupConfigEditor<cBlacklist, cChannel>(&EpgfixerBlacklists));
+  else if (state == osUser4)
+     return AddSubMenu(new cMenuSetupConfigEditor<cEpgClone, cEvent>(&EpgfixerEpgClones));
   return state;
 }

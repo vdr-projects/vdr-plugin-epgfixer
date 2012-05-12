@@ -62,7 +62,7 @@ endif
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o charset.o config.o epghandler.o regexp.o setup_menu.o tools.o
+OBJS = $(PLUGIN).o blacklist.o charset.o config.o epgclone.o epghandler.o regexp.o setup_menu.o tools.o
 
 ifeq ($(REGEXLIB), pcre)
 LIBS += $(shell pcre-config --libs-posix)

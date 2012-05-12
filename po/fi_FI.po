@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: vdr-epgfixer 0.1.0\n"
+"Project-Id-Version: vdr-epgfixer 0.2.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2012-05-05 19:01+0300\n"
-"PO-Revision-Date: 2012-05-05 18:25+0300\n"
+"POT-Creation-Date: 2012-05-09 23:25+0300\n"
+"PO-Revision-Date: 2012-05-09 23:20+0300\n"
 "Last-Translator: Matti Lehtimäki <matti.lehtimaki@gmail.com>\n"
 "Language-Team: Finnish <vdr@linuxtv.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 msgid "Fix bugs in EPG"
 msgstr "Korjaa virheitä EPG:ssä"
 
-msgid " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#"
+msgid "RegexpChars$ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}<>$^*.,:;-=#"
 msgstr " abcdefghijklmnopqrstuvwxyzåäöABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ0123456789%~\\/?!()[]{}<>$^*.,:;-=#"
 
 msgid "Button$Cancel"
@@ -37,8 +37,20 @@ msgstr "Merkistömuunnokset"
 msgid "Edit character set conversions."
 msgstr "Muokkaa merkistömuunnoksia."
 
+msgid "EPG blacklists"
+msgstr "Ohjelmaoppaan mustat listat"
+
+msgid "Edit EPG blacklists."
+msgstr "Muokkaa ohjelmaoppaan mustia listoja. Mustilla listoilla voi estää ohjelmatietojen käsittelyn valituilta kanavilta."
+
+msgid "EPG cloning"
+msgstr "Ohjelmatietojen kopiointi"
+
+msgid "Edit EPG data cloning."
+msgstr "Muokkaa ohjelmatietojen kopiointia. Tällä voit kopioida kanavan ohjelmatiedot toiselle kanavalle."
+
 msgid "--- EPG bugfixes ---"
-msgstr "--- EPG korjaukset ---"
+msgstr "--- Ohjelmaoppaan korjaukset ---"
 
 msgid "Remove quotes from ShortText"
 msgstr "Poista lainaukset lyhyestä kuvauksesta"
@@ -54,7 +66,7 @@ msgstr ""
 "Otsikko\n"
 "\"Lyhyt kuvaus\". Kuvaus"
 
-msgid "Move Description from ShortText."
+msgid "Move Description from ShortText"
 msgstr "Siirrä kuvaus lyhyeen kuvaukseen"
 
 msgid ""

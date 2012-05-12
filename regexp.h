@@ -10,8 +10,6 @@
 
 #include "tools.h"
 #include <vdr/epg.h>
-#include <vdr/tools.h>
-#include <stdio.h>
 
 #ifdef HAVE_PCREPOSIX
 #include <pcre.h>
@@ -31,14 +29,14 @@ private:
 public:
   cRegexp();
   virtual ~cRegexp();
+  using cListItem::Apply;
   virtual bool Apply(cEvent *Event);
   void SetFromString(char *string, bool Enabled);
   int GetSource() { return source; };
   void ToggleEnabled(void);
-  virtual void PrintConfigLineToFile(FILE *f);
 };
 
 // Global instance
-extern cEpgfixerList<cRegexp> EpgfixerRegexps;
+extern cEpgfixerList<cRegexp, cEvent> EpgfixerRegexps;
 
 #endif //__EPGFIXER_REGEXP_H_

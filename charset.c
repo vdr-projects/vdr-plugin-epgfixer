@@ -6,39 +6,45 @@
  */
 
 #include "charset.h"
-#include <unistd.h>
 
 /* Global instance */
-cEpgfixerList<cCharSet> EpgfixerCharSets;
+cEpgfixerList<cCharSet, cEvent> EpgfixerCharSets;
 
 cCharSet::cCharSet()
 {
-  charset = NULL;
+  origcharset = NULL;
+  realcharset = NULL;
 }
 
 cCharSet::~cCharSet(void)
 {
-  free(charset);
+  free(origcharset);
+  free(realcharset);
 }
 
 bool cCharSet::Apply(cEvent *Event)
 {
   if (enabled && IsActive(Event->ChannelID())) {
-     cCharSetConv conv(charset, cCharSetConv::SystemCharacterTable());
-     Event->SetTitle(conv.Convert(Event->Title()));
-     Event->SetShortText(conv.Convert(Event->ShortText()));
-     Event->SetDescription(conv.Convert(Event->Description()));
+     cCharSetConv backconv(cCharSetConv::SystemCharacterTable(), origcharset ? origcharset : "iso6937");
+     cString title(backconv.Convert(Event->Title()));
+     cString shortText(backconv.Convert(Event->ShortText()));
+     cString description(backconv.Convert(Event->Description()));
+     cCharSetConv conv(realcharset, cCharSetConv::SystemCharacterTable());
+     Event->SetTitle(conv.Convert(title));
+     Event->SetShortText(conv.Convert(shortText));
+     Event->SetDescription(conv.Convert(description));
      }
   return false;
 }
 
 void cCharSet::SetFromString(char *s, bool Enabled)
 {
-  FREE(charset);
+  FREE(origcharset);
+  FREE(realcharset);
   Free();
   enabled = Enabled;
   if (s[0] == '!')
-     string = strdup(s+1);
+     string = strdup(s + 1);
   else
      string = strdup(s);
   if (s[0] == '!' || s[0] == '#')
@@ -46,19 +52,19 @@ void cCharSet::SetFromString(char *s, bool Enabled)
   char *p = (s[0] == '#') ? NULL : s;
   if (p) {
      char *p = (s[0] == '!') ? s+1 : s;
-     char *f = strchr(p, ':');
-     if (f) {
-        *f = 0;
-        charset = strdup(f + 1);
+     char *r = strchr(p, ':');
+     if (r) {
+        *r = 0;
         numchannels = LoadChannelsFromString(p);
+        p = r + 1;
+        }
+     r = strchr(p, '=');
+     if (r) {
+        *r = 0;
+        origcharset = strdup(p);
+        realcharset = strdup(r + 1);
         }
      else
-        charset = strdup(p);
+        realcharset = strdup(p);
      }
-}
-
-void cCharSet::PrintConfigLineToFile(FILE *f)
-{
-  if (f)
-     fprintf(f, "%s%s\n", enabled ? "" : "!", string);
 }

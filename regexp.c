@@ -6,10 +6,9 @@
  */
 
 #include "regexp.h"
-#include <unistd.h>
 
 /* Global instance */
-cEpgfixerList<cRegexp> EpgfixerRegexps;
+cEpgfixerList<cRegexp, cEvent> EpgfixerRegexps;
 
 const char *strSources[] = { "title","shorttext","description","undefined" };
 
@@ -176,16 +175,6 @@ bool cRegexp::Apply(cEvent *Event)
         }
      }
   return false;
-}
-
-void cRegexp::PrintConfigLineToFile(FILE *f)
-{
-  if (f) {
-     if (source == REGEXP_UNDEFINED)
-        fprintf(f, "%s\n", string);
-     else
-        fprintf(f, "%s%s\n", enabled ? "" : "!", string);
-     }
 }
 
 void cRegexp::ToggleEnabled(void)

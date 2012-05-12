@@ -19,6 +19,8 @@ private:
   void StripHTML(cEvent *Event);
 public:
   cEpgfixerEpgHandler(void) {};
+  virtual bool HandleEvent(cEvent *Event);
+  virtual bool IgnoreChannel(const cChannel *Channel);
   virtual bool FixEpgBugs(cEvent *Event);
 };
 

@@ -6,6 +6,7 @@
  */
 
 #include "tools.h"
+#include <vdr/thread.h>
 
 //
 // HTML conversion code taken from RSS Reader plugin for VDR
@@ -152,6 +153,81 @@ char *striphtml(char *str)
   return NULL;
 }
 
+// --- cAddEventThread ----------------------------------------
+
+class cAddEventListItem : public cListObject
+{
+protected:
+  cEvent *event;
+  tChannelID channelID;
+public:
+  cAddEventListItem(cEvent *Event, tChannelID ChannelID) { event = Event; channelID = ChannelID; }
+  tChannelID GetChannelID() { return channelID; }
+  cEvent *GetEvent() { return event; }
+  ~cAddEventListItem() { }
+};
+
+class cAddEventThread : public cThread
+{
+private:
+  time_t LastHandleEvent;
+  cList<cAddEventListItem> *list;
+protected:
+  virtual void Action(void);
+public:
+  cAddEventThread(void);
+  ~cAddEventThread(void) { list->cList::Clear(); }
+  void AddEvent(cEvent *Event, tChannelID ChannelID);
+};
+
+cAddEventThread::cAddEventThread(void)
+:cThread("add events to schedule")
+{
+  LastHandleEvent = time(NULL);
+  list = new cList<cAddEventListItem>;
+  SetPriority(19);
+}
+
+void cAddEventThread::Action(void)
+{
+  if (Running()) {
+     cAddEventListItem *e = list->First();
+     while (e) {
+           cAddEventListItem *d = NULL;
+           cSchedulesLock SchedulesLock(true, 10);
+           cSchedules *schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
+           if (schedules) {
+              ((cSchedule *)schedules->GetSchedule(Channels.GetByChannelID(e->GetChannelID()), true))->AddEvent(e->GetEvent());
+              d = e;
+              }
+           e = list->Next(e);
+           if (d)
+              list->Del(d);
+           }
+     if (time(NULL) - LastHandleEvent > 10)
+        Cancel();
+     }
+}
+
+void cAddEventThread::AddEvent(cEvent *Event, tChannelID ChannelID)
+{
+  LastHandleEvent = time(NULL);
+  list->Add(new cAddEventListItem(Event, ChannelID));
+}
+
+static cAddEventThread AddEventThread;
+
+// ---
+
+void AddEvent(cEvent *Event, tChannelID ChannelID)
+{
+  if (!AddEventThread.Active())
+     AddEventThread.Start();
+  AddEventThread.AddEvent(Event, ChannelID);
+}
+
+// --- Listitem ----------------------------------------
+
 cListItem::cListItem()
 {
   enabled = false;
@@ -205,7 +281,7 @@ bool cListItem::IsActive(tChannelID ChannelID)
      bool found = false;
      int i = 0;
      while (i < numchannels) {
-           if ((Channels.GetByChannelID(ChannelID)->Number() == GetChannelNum(i)) || 
+           if ((Channels.GetByChannelID(ChannelID)->Number() == GetChannelNum(i)) ||
                (GetChannelID(i) && strcmp(*(ChannelID.ToString()), GetChannelID(i)) == 0)) {
               found = true;
               break;
@@ -239,9 +315,9 @@ int cListItem::LoadChannelsFromString(const char *string)
      while (i < numchannels) {
            // Use channel numbers
            if (atoi(string))
-              (channels_num)[i] = atoi(pc);
+              channels_num[i] = atoi(pc);
            else// use channel IDs
-              (channels_str)[i] = strdup(pc);
+              channels_str[i] = strdup(pc);
            pc = strtok(NULL, ",");
            ++i;
            }
@@ -253,4 +329,10 @@ int cListItem::LoadChannelsFromString(const char *string)
 void cListItem::ToggleEnabled(void)
 {
   enabled = !enabled;
+}
+
+void cListItem::PrintConfigLineToFile(FILE *f)
+{
+  if (f)
+     fprintf(f, "%s%s\n", (!enabled && string && *string != '#')  ? "!" : "", string);
 }

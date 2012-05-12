@@ -10,22 +10,21 @@
 
 #include "tools.h"
 #include <vdr/epg.h>
-#include <vdr/tools.h>
-#include <stdio.h>
 
 class cCharSet : public cListItem
 {
 private:
-  char *charset;
+  char *origcharset;
+  char *realcharset;
 public:
   cCharSet();
   virtual ~cCharSet();
+  using cListItem::Apply;
   virtual bool Apply(cEvent *Event);
   void SetFromString(char *string, bool Enabled);
-  virtual void PrintConfigLineToFile(FILE *f);
 };
 
 // Global instance
-extern cEpgfixerList<cCharSet> EpgfixerCharSets;
+extern cEpgfixerList<cCharSet, cEvent> EpgfixerCharSets;
 
 #endif //__EPGFIXER_CHARSET_H_

@@ -7,7 +7,9 @@
 
 #include <vdr/plugin.h>
 #include <vdr/i18n.h>
+#include "blacklist.h"
 #include "charset.h"
+#include "epgclone.h"
 #include "regexp.h"
 #include "setup_menu.h"
 #include "epghandler.h"
@@ -20,7 +22,7 @@
 #define GITVERSION ""
 #endif
 
-static const char VERSION[]        = "0.1.0" GITVERSION;
+static const char VERSION[]        = "0.2.0" GITVERSION;
 static const char DESCRIPTION[]    = trNOOP("Fix bugs in EPG");
 
 class cPluginEpgfixer : public cPlugin {
@@ -80,6 +82,10 @@ bool cPluginEpgfixer::Initialize(void)
   EpgfixerRegexps.ReloadConfigFile();
   EpgfixerCharSets.SetConfigFile(AddDirectory(cPlugin::ConfigDirectory(PLUGIN_NAME_I18N), "charset.conf")); // allowed only via main thread!);
   EpgfixerCharSets.ReloadConfigFile();
+  EpgfixerBlacklists.SetConfigFile(AddDirectory(cPlugin::ConfigDirectory(PLUGIN_NAME_I18N), "blacklist.conf")); // allowed only via main thread!);
+  EpgfixerBlacklists.ReloadConfigFile();
+  EpgfixerEpgClones.SetConfigFile(AddDirectory(cPlugin::ConfigDirectory(PLUGIN_NAME_I18N), "epgclone.conf")); // allowed only via main thread!);
+  EpgfixerEpgClones.ReloadConfigFile();
   return new cEpgfixerEpgHandler();
 }
 
@@ -149,10 +155,16 @@ bool cPluginEpgfixer::Service(const char *Id, void *Data)
 const char **cPluginEpgfixer::SVDRPHelpPages(void)
 {
   static const char *HelpPages[] = {
+    "RLAL\n"
+    "    Reload all configs.",
     "RLRE\n"
     "    Reload regexp.conf.",
     "RLCH\n"
     "    Reload charset.conf.",
+    "RLBL\n"
+    "    Reload blacklist.conf.",
+    "RLEP\n"
+    "    Reload epgclone.conf.",
     NULL
     };
   return HelpPages;
@@ -174,6 +186,33 @@ cString cPluginEpgfixer::SVDRPCommand(const char *Command, const char *Option, i
      } else {
         ReplyCode = 554; // Requested action failed
         return cString("Reloading charset.conf failed");
+     }
+  }
+  else if (strcasecmp(Command, "RLBL") == 0) {
+     if (EpgfixerBlacklists.ReloadConfigFile()) {
+        return cString("Reloaded blacklist.conf");
+     } else {
+        ReplyCode = 554; // Requested action failed
+        return cString("Reloading blacklist.conf failed");
+     }
+  }
+  else if (strcasecmp(Command, "RLEP") == 0) {
+     if (EpgfixerEpgClones.ReloadConfigFile()) {
+        return cString("Reloaded epgclone.conf");
+     } else {
+        ReplyCode = 554; // Requested action failed
+        return cString("Reloading epgclone.conf failed");
+     }
+  }
+  else if (strcasecmp(Command, "REL") == 0) {
+     if (EpgfixerCharSets.ReloadConfigFile() &&
+         EpgfixerCharSets.ReloadConfigFile() &&
+         EpgfixerBlacklists.ReloadConfigFile() &&
+         EpgfixerEpgClones.ReloadConfigFile()) {
+        return cString("Reloaded all configs");
+     } else {
+        ReplyCode = 554; // Requested action failed
+        return cString("Reloading all or some configs failed");
      }
   }
   return NULL;

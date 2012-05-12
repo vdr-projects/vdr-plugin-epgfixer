@@ -6,8 +6,10 @@
  */
 
 #include "epghandler.h"
-#include "config.h"
+#include "blacklist.h"
 #include "charset.h"
+#include "config.h"
+#include "epgclone.h"
 #include "regexp.h"
 #include <vdr/tools.h>
 #include <string.h>
@@ -266,4 +268,14 @@ bool cEpgfixerEpgHandler::FixEpgBugs(cEvent *Event)
   StripHTML(Event);
   FixBugs(Event);
   return false;
+}
+
+bool cEpgfixerEpgHandler::HandleEvent(cEvent *Event)
+{
+  return EpgfixerEpgClones.Apply(Event);
+}
+
+bool cEpgfixerEpgHandler::IgnoreChannel(const cChannel *Channel)
+{
+  return EpgfixerBlacklists.Apply((cChannel *)Channel);
 }
