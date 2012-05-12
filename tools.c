@@ -170,13 +170,14 @@ public:
 class cAddEventThread : public cThread
 {
 private:
-  time_t LastHandleEvent;
+  cTimeMs LastHandleEvent;
   cList<cAddEventListItem> *list;
+  enum { INSERT_TIMEOUT_IN_MS = 10000 };
 protected:
   virtual void Action(void);
 public:
   cAddEventThread(void);
-  ~cAddEventThread(void) { list->cList::Clear(); }
+  ~cAddEventThread(void);
   void AddEvent(cEvent *Event, tChannelID ChannelID);
 };
 
@@ -185,33 +186,47 @@ cAddEventThread::cAddEventThread(void)
 {
   LastHandleEvent = time(NULL);
   list = new cList<cAddEventListItem>;
-  SetPriority(19);
+}
+
+cAddEventThread::~cAddEventThread(void)
+{
+  LOCK_THREAD;
+  list->cList::Clear();
+  Cancel(3);
 }
 
 void cAddEventThread::Action(void)
 {
-  if (Running()) {
+  SetPriority(19);
+  cList<cAddEventListItem> *tmplist = new cList<cAddEventListItem>;
+  while (Running() && !LastHandleEvent.TimedOut()) {
+     Lock();
      cAddEventListItem *e = list->First();
      while (e) {
-           cAddEventListItem *d = NULL;
+           tmplist->Add(new cAddEventListItem(e->GetEvent(), e->GetChannelID()));
+           list->Del(e);
+           e = list->First();
+           }
+     Unlock();
+     e = tmplist->First();
+     while (e) {
            cSchedulesLock SchedulesLock(true, 10);
            cSchedules *schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
            if (schedules) {
               ((cSchedule *)schedules->GetSchedule(Channels.GetByChannelID(e->GetChannelID()), true))->AddEvent(e->GetEvent());
-              d = e;
+              tmplist->Del(e);
               }
-           e = list->Next(e);
-           if (d)
-              list->Del(d);
+           e = tmplist->First();
            }
-     if (time(NULL) - LastHandleEvent > 10)
-        Cancel();
+     cCondWait::SleepMs(10);
      }
+  delete tmplist;
 }
 
 void cAddEventThread::AddEvent(cEvent *Event, tChannelID ChannelID)
 {
-  LastHandleEvent = time(NULL);
+  LOCK_THREAD;
+  LastHandleEvent.Set(INSERT_TIMEOUT_IN_MS);
   list->Add(new cAddEventListItem(Event, ChannelID));
 }
 
