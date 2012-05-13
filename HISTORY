@@ -1,6 +1,10 @@
 VDR Plugin 'epgfixer' Revision History
 --------------------------------------
 
+2012-05-13: Version 0.2.1
+
+- Fix linking when --as-needed is used.
+
 2012-05-13: Version 0.2.0
 
 - Support for ignoring EPG data for selected channels.
