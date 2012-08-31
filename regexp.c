@@ -7,6 +7,11 @@
 
 #include "regexp.h"
 
+// for PCRE without JIT support
+#ifndef PCRE_STUDY_JIT_COMPILE
+#define PCRE_STUDY_JIT_COMPILE 0
+#endif
+
 /* Global instance */
 cEpgfixerList<cRegexp, cEvent> EpgfixerRegexps;
 
@@ -41,7 +46,7 @@ void cRegexp::Compile()
      enabled = false;
      }
   else {
-     sd = pcre_study(re, 0, (const char **)&error);
+     sd = pcre_study(re, PCRE_STUDY_JIT_COMPILE, (const char **)&error);
      if (error)
         error("PCRE study error: %s", error);
      }
