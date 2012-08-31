@@ -27,10 +27,10 @@ protected:
   bool enabled;
   char *string;
   int *channels_num;
-  char **channels_str;
+  tChannelID *channels_id;
   int numchannels;
   void Free();
-  const char *GetChannelID(int index);
+  tChannelID *GetChannelID(int index);
   int GetChannelNum(int index);
   int LoadChannelsFromString(const char *string);
   bool IsActive(tChannelID ChannelID);

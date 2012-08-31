@@ -240,7 +240,7 @@ cListItem::cListItem()
   string = NULL;
   numchannels = 0;
   channels_num = NULL;
-  channels_str = NULL;
+  channels_id = NULL;
 }
 
 cListItem::~cListItem(void)
@@ -250,24 +250,17 @@ cListItem::~cListItem(void)
 
 void cListItem::Free(void)
 {
-  if (channels_str) {
-     int i = 0;
-     while (i < numchannels) {
-           free(channels_str[i]);
-           ++i;
-           }
-     }
   FREE(channels_num);
-  FREE(channels_str);
+  FREE(channels_id);
   FREE(string);
   numchannels = 0;
   enabled = false;
 }
 
-const char *cListItem::GetChannelID(int index)
+tChannelID *cListItem::GetChannelID(int index)
 {
-  if (channels_str && index >= 0 && index < numchannels)
-     return channels_str[index];
+  if (channels_id && index >= 0 && index < numchannels)
+     return &channels_id[index];
   else
      return NULL;
 }
@@ -282,53 +275,72 @@ int cListItem::GetChannelNum(int index)
 
 bool cListItem::IsActive(tChannelID ChannelID)
 {
-  bool active = true;
+  bool active = false;
   if (numchannels > 0) {
-     bool found = false;
      int i = 0;
+     int channel_number = Channels.GetByChannelID(ChannelID)->Number();
      while (i < numchannels) {
-           if ((Channels.GetByChannelID(ChannelID)->Number() == GetChannelNum(i)) ||
-               (GetChannelID(i) && strcmp(*(ChannelID.ToString()), GetChannelID(i)) == 0)) {
-              found = true;
+           if ((channel_number == GetChannelNum(i)) ||
+               (GetChannelID(i) && (ChannelID == *GetChannelID(i)))) {
+              active = true;
               break;
               }
            ++i;
            }
-     if (!found)
-        active = false;
      }
+  else
+     active = true;
   return active;
 }
 
 int cListItem::LoadChannelsFromString(const char *string)
 {
   numchannels = 0;
-  char *tmpstring = strdup(string);
-  char *c = tmpstring;
-  while (c) {
-        ++numchannels;
-        c = strchr(c+1, ',');
-        }
-  if (numchannels > 0) {
-     char *c = tmpstring;
-     // Use channel numbers
+  bool numbers = false;
+  if (string != NULL) {
      if (atoi(string))
+        numbers = true;
+     char *tmpstring = strdup(string);
+     char *c = strtok(tmpstring, ",");
+     while (c) {
+           ++numchannels;
+           char *d = 0;
+           if (numbers && (d = strchr(c, '-')))// only true if numbers are used
+              numchannels = numchannels + atoi(d+1) - atoi(c);
+           c = strtok(NULL, ",");
+           }
+     free(tmpstring);
+     }
+  if (numchannels > 0) {
+     char *tmpstring = strdup(string);
+     // Use channel numbers
+     if (numbers)
         channels_num = (int *)malloc(sizeof(int)*numchannels);
      else// use channel IDs
-        channels_str = (char **)malloc(sizeof(char *)*numchannels);
+        channels_id = (tChannelID *)malloc(sizeof(tChannelID)*numchannels);
      int i = 0;
-     char *pc = strtok(c, ",");
+     char *c = strtok(tmpstring, ",");
      while (i < numchannels) {
            // Use channel numbers
-           if (atoi(string))
-              channels_num[i] = atoi(pc);
-           else// use channel IDs
-              channels_str[i] = strdup(pc);
-           pc = strtok(NULL, ",");
+           if (numbers) {
+              channels_num[i] = atoi(c);
+              if (char *d = strchr(c, '-')) {
+                 int count = atoi(d+1) - channels_num[i] + 1;
+                 int j = 1;
+                 while (j < count) {
+                       channels_num[i+j] = channels_num[i] + j;
+                       ++j;
+                       }
+                 i = i + count;
+                 }
+              }
+           else // use channel IDs
+              channels_id[i] = tChannelID::FromString(c);
+           c = strtok(NULL, ",");
            ++i;
            }
+     free(tmpstring);
      }
-  free(tmpstring);
   return numchannels;
 }
 

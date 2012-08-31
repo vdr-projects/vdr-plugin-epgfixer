@@ -59,6 +59,7 @@ General syntax of configuration files:
   is used. If no list of channels is given the line is used for all channels.
 - Channel_list can contain either channel IDs (e.g. S19.2E-1-1089-12003-0) or
   numbers but not both.
+- Channel intervals (e.g. 1-10) can be used for channel numbers.
 
 Syntax of regexp.conf line is "Channel_list:Parsed_epg_field=Regexp" with:
 - Parsed_epg_field is the EPG field for which the regular expression is applied
