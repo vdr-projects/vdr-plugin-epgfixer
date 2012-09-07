@@ -64,11 +64,27 @@ General syntax of configuration files:
 Syntax of regexp.conf line is "Channel_list:Parsed_epg_field=Regexp" with:
 - Parsed_epg_field is the EPG field for which the regular expression is applied
   with available field names title, shorttext and description.
+- Regular expressions can be used in different ways: Perl-style 
+  's/PATTERN/REPLACEMENT/' and 'm/PATTERN/' operators or simply using 'PATTERN'
+  of which the latter two use named backreferences.
 - Regular expressions use named backreferences with either title, shorttext,
   description or rating (parental rating).
 - By prepending "a" or "p" to backreference name (except rating field) the
   back referenced string is either appended or prepended to the original
   content of the target EPG field, respectively.
+- Perl-style operator 's/PATTERN/REPLACEMENT/' replaces match of PATTERN with
+  REPLACEMENT in the EPG field and cannot be used to transfer content to other
+  EPG fields.
+- Perl-style operator 'm//' operates using backreferences similarly to when not
+  using Perl-style operator but adds possibility of using modifiers.
+- One or more modifiers can be appended Perl-style operators:
+  - g = Global matching (only with 's///')
+  - i = Case-insensitive pattern matching.
+  - m = Treat string as multiple lines.
+  - s = Dot matches newlines.
+  - u = Handles UTF8 characters.
+  - x = Ignore white spaces. Comments in regular expression using (?#comment). 
+  - X = Strict escape parsing.
 - Several regular expressions may be applied to same field.
 
 Syntax of charset.conf line is "Channel_list:BroadcastCharset=OriginalCharSet"

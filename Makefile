@@ -29,8 +29,6 @@ TMPDIR ?= /tmp
 ### Regexp
 ifeq (exists, $(shell pkg-config libpcre && echo exists))
 	REGEXLIB = pcre
-else ifeq (exists, $(shell pkg-config tre && echo exists))
-	REGEXLIB = tre
 endif
 
 ### Make sure that necessary options are included:

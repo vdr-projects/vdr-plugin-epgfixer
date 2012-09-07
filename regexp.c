@@ -12,6 +12,10 @@
 #define PCRE_STUDY_JIT_COMPILE 0
 #endif
 
+#define OVECCOUNT 33    /* should be a multiple of 3 */
+
+typedef enum { NONE,FIRST,GLOBAL } replace;
+
 /* Global instance */
 cEpgfixerList<cRegexp, cEvent> EpgfixerRegexps;
 
@@ -22,7 +26,10 @@ const char *strBackrefs[] = { "atitle","ptitle","title","ashorttext","pshorttext
 
 cRegexp::cRegexp()
 {
+  modifiers = 0;
   regexp = NULL;
+  replace = NONE;
+  replacement = NULL;
   source = REGEXP_UNDEFINED;
   re = NULL;
   sd = NULL;
@@ -32,6 +39,7 @@ cRegexp::~cRegexp(void)
 {
   Free();
   free(regexp);
+  free(replacement);
   FreeCompiled();
 }
 
@@ -40,7 +48,7 @@ void cRegexp::Compile()
   FreeCompiled();
   const char *error;
   int erroffset;
-  re = pcre_compile(regexp, 0, &error, &erroffset, NULL);
+  re = pcre_compile(regexp, modifiers, &error, &erroffset, NULL);
   if (error) {
      error("PCRE compile error: %s at offset %i", error, erroffset);
      enabled = false;
@@ -68,19 +76,89 @@ void cRegexp::FreeCompiled()
      }
 }
 
+void cRegexp::ParseRegexp(char *restring)
+{
+  if (restring) {
+     int len = strlen(restring);
+     if (len > 2 && restring[1] == '/' && (restring[0] == 'm' || restring[0] == 's')) {
+        // separate modifiers from end of regexp
+        char *l = strrchr(restring, '/');
+        if (l) {
+           *l = 0;
+           int i = 1;
+           // handle all modifiers
+           while (*(l+i) != 0) {
+                 switch (*(l+i)) {
+                   case 'g':
+                     if (restring[0] == 's')
+                        replace = GLOBAL;
+                     break;
+                   case 'i':
+                     modifiers = modifiers | PCRE_CASELESS;
+                     break;
+                   case 'm':
+                     modifiers = modifiers | PCRE_MULTILINE;
+                     break;
+                   case 's':
+                     modifiers = modifiers | PCRE_DOTALL;
+                     break;
+                   case 'u':
+                     modifiers = modifiers | PCRE_UTF8;
+                     break;
+                   case 'x':
+                     modifiers = modifiers | PCRE_EXTENDED;
+                     break;
+                   case 'X':
+                     modifiers = modifiers | PCRE_EXTRA;
+                     break;
+                   default:
+                     break;
+                   }
+                 i++;
+                 }
+           }
+        // parse regexp format 's///'
+        if (restring[0] == 's') {
+           if (replace == NONE)
+              replace = FIRST;
+           char *p = &restring[2];
+           while (p = strchr(p, '/')) {
+                 // check for escaped slashes
+                 if (*(p-1) != '\\') {
+                    *p = 0;
+                    regexp = strdup(&restring[2]);
+                    if (*(p+1) != '/') // 
+                       replacement = strdup(p+1);
+                    break;
+                    }
+                 }
+           }
+        else if (restring[0] == 'm') // parse regexp format 'm//'
+           regexp = strdup(&restring[2]);
+        }
+     else // use backreferences
+        regexp = strdup(restring);
+     }
+}
+
 void cRegexp::SetFromString(char *s, bool Enabled)
 {
+  modifiers = 0;
   FREE(regexp);
+  replace = NONE;
+  FREE(replacement);
   Free();
   FreeCompiled();
   enabled = Enabled;
   bool compile = true;
+  // comments are not analysed
   if (s[0] == '#') {
      enabled = false;
      source = REGEXP_UNDEFINED;
      string = strdup(s);
      return;
      }
+  // inactive regexps
   if (s[0] == '!') {
      enabled = compile = false;
      string = strdup(s+1);
@@ -90,9 +168,10 @@ void cRegexp::SetFromString(char *s, bool Enabled)
   char *p = strchr(s, '=');
   if (p) {
      *p = 0;
-     regexp = strdup(p + 1);
+     ParseRegexp(p + 1);
      char *chanfield = (s[0] == '!') ? s+1 : s;
      char *field = chanfield;
+     // find active channels list
      char *f = strchr(chanfield, ':');
      if (f) {
         *f = 0;
@@ -115,68 +194,114 @@ bool cRegexp::Apply(cEvent *Event)
   if (enabled && re && IsActive(Event->ChannelID())) {
      cString tmpstring;
      switch (source) {
-            case REGEXP_TITLE:
-              tmpstring = Event->Title();
-              break;
-            case REGEXP_SHORTTEXT:
-              tmpstring = Event->ShortText();
-              break;
-            case REGEXP_DESCRIPTION:
-              tmpstring = Event->Description();
-              break;
-            default:
-              tmpstring = "";
-              break;
-            }
+       case REGEXP_TITLE:
+         tmpstring = Event->Title();
+         break;
+       case REGEXP_SHORTTEXT:
+         tmpstring = Event->ShortText();
+         break;
+       case REGEXP_DESCRIPTION:
+         tmpstring = Event->Description();
+         break;
+       default:
+         tmpstring = "";
+         break;
+       }
      if (!*tmpstring)
         tmpstring = "";
-     const char *string;
-     int ovector[20];
-     int rc;
-     rc = pcre_exec(re, sd, *tmpstring, strlen(*tmpstring), 0, 0, ovector, 20);
-     if (rc > 0) {
-        int i = 0;
-        while (i < 10) {
-          if (pcre_get_named_substring(re, tmpstring, ovector, rc, strBackrefs[i], &string) != PCRE_ERROR_NOSUBSTRING) {
-             switch (i) {
-               case TITLE:
-                 Event->SetTitle(string);
+     int ovector[OVECCOUNT];
+     int rc = 0;
+     if (replace != NONE) {// find and replace
+        int last_match_end = -1;
+        int options = 0;
+        int start_offset = 0;
+        int tmpstringlen = strlen(*tmpstring);
+        cString resultstring = "";
+        // loop through matches
+        while ((rc = pcre_exec(re, sd, *tmpstring, tmpstringlen, start_offset, options, ovector, OVECCOUNT)) > 0) {
+              last_match_end = ovector[1];
+              resultstring = cString::sprintf("%s%.*s%s", *resultstring, ovector[0]-start_offset, &tmpstring[start_offset], replacement);
+              options = 0;
+              if (ovector[0] == ovector[1]) {
+                 if (ovector[0] == tmpstringlen)
+                    break;
+                 options = PCRE_NOTEMPTY_ATSTART | PCRE_ANCHORED;
+                 }
+              if (replace == FIRST) // only first match wanted
                  break;
-               case ATITLE:
-                 Event->SetTitle(*cString::sprintf("%s %s", Event->Title(), string));
-                 break;
-               case PTITLE:
-                 Event->SetTitle(*cString::sprintf("%s %s", string, Event->Title()));
-                 break;
-               case SHORTTEXT:
-                 Event->SetShortText(string);
-                 break;
-               case ASHORTTEXT:
-                 Event->SetShortText(*cString::sprintf("%s %s", Event->ShortText(), string));
-                 break;
-               case PSHORTTEXT:
-                 Event->SetShortText(*cString::sprintf("%s %s", string, Event->ShortText()));
-                 break;
-               case DESCRIPTION:
-                 Event->SetDescription(string);
-                 break;
-               case ADESCRIPTION:
-                 Event->SetDescription(*cString::sprintf("%s %s", Event->Description(), string));
-                 break;
-               case PDESCRIPTION:
-                 Event->SetDescription(*cString::sprintf("%s %s", string, Event->Description()));
-                 break;
-               case RATING:
-                 Event->SetParentalRating(atoi(string));
-                 break;
-               default:
-                 break;
-               }
-             pcre_free_substring(string);
+              start_offset = ovector[1];
+              }
+        // replace EPG field if regexp matched
+        if (**resultstring && (last_match_end < tmpstringlen-1)) {
+           resultstring = cString::sprintf("%s%s", *resultstring, tmpstring+last_match_end);
+           switch (source) {
+             case REGEXP_TITLE:
+               Event->SetTitle(resultstring);
+               break;
+             case REGEXP_SHORTTEXT:
+               Event->SetShortText(resultstring);
+               break;
+             case REGEXP_DESCRIPTION:
+               Event->SetDescription(resultstring);
+               break;
+             default:
+               break;
              }
-           ++i;
+           return true;
            }
-        return true;
+        }
+     else {// use backreferences
+        const char *string;
+        rc = pcre_exec(re, sd, *tmpstring, strlen(*tmpstring), 0, 0, ovector, OVECCOUNT);
+        if (rc == 0) {
+           error("maximum number of captured substrings is %d\n", OVECCOUNT/3 - 1);
+           }
+        else if (rc > 0) {
+           int i = 0;
+           // loop through all possible backreferences
+           // TODO allow duplicate backreference names?
+           while (i < 10) {
+             if (pcre_get_named_substring(re, tmpstring, ovector, rc, strBackrefs[i], &string) != PCRE_ERROR_NOSUBSTRING) {
+                switch (i) {
+                  case TITLE:
+                    Event->SetTitle(string);
+                    break;
+                  case ATITLE:
+                    Event->SetTitle(*cString::sprintf("%s %s", Event->Title(), string));
+                    break;
+                  case PTITLE:
+                    Event->SetTitle(*cString::sprintf("%s %s", string, Event->Title()));
+                    break;
+                  case SHORTTEXT:
+                    Event->SetShortText(string);
+                    break;
+                  case ASHORTTEXT:
+                    Event->SetShortText(*cString::sprintf("%s %s", Event->ShortText(), string));
+                    break;
+                  case PSHORTTEXT:
+                    Event->SetShortText(*cString::sprintf("%s %s", string, Event->ShortText()));
+                    break;
+                  case DESCRIPTION:
+                    Event->SetDescription(string);
+                    break;
+                  case ADESCRIPTION:
+                    Event->SetDescription(*cString::sprintf("%s %s", Event->Description(), string));
+                    break;
+                  case PDESCRIPTION:
+                    Event->SetDescription(*cString::sprintf("%s %s", string, Event->Description()));
+                    break;
+                  case RATING:
+                    Event->SetParentalRating(atoi(string));
+                    break;
+                  default:
+                    break;
+                  }
+                pcre_free_substring(string);
+                }
+              ++i;
+              }
+           return true;
+           }
         }
      }
   return false;

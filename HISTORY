@@ -1,6 +1,13 @@
 VDR Plugin 'epgfixer' Revision History
 --------------------------------------
 
+2012-09-xx: Version 0.3.0
+
+- Enable JIT compiling in PCRE if supported.
+- Support for channel intervals for channel numbers.
+- Support search-and-replace using Perl-style 's///' operator.
+- Support Perl-style modifiers when using 's///' or 'm//' operators.
+
 2012-05-13: Version 0.2.1
 
 - Fix linking when --as-needed is used.

@@ -21,11 +21,15 @@ class cRegexp : public cListItem
 {
 private:
   char *regexp;
+  char *replacement;
+  int replace;
+  int modifiers;
   int source;
   pcre *re;
   pcre_extra *sd;
   void Compile();
   void FreeCompiled();
+  void ParseRegexp(char *restring);
 public:
   cRegexp();
   virtual ~cRegexp();
