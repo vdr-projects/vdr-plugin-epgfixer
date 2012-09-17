@@ -129,6 +129,8 @@ void cRegexp::ParseRegexp(char *restring)
                     regexp = strdup(&restring[2]);
                     if (*(p+1) != '/') // 
                        replacement = strdup(p+1);
+                    else
+                       replacement = strdup("");
                     break;
                     }
                  }
@@ -232,7 +234,7 @@ bool cRegexp::Apply(cEvent *Event)
               start_offset = ovector[1];
               }
         // replace EPG field if regexp matched
-        if (**resultstring && (last_match_end < tmpstringlen-1)) {
+        if (last_match_end > 0 && (last_match_end < tmpstringlen-1)) {
            resultstring = cString::sprintf("%s%s", *resultstring, tmpstring+last_match_end);
            switch (source) {
              case REGEXP_TITLE:
