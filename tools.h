@@ -66,7 +66,7 @@ protected:
                 ++line;
                 if (!isempty(s)) {
                    this->Add(new LISTITEM());
-                   cList<LISTITEM>::Last()->SetFromString(s, true);
+                   cList<LISTITEM>::Last()->LISTITEM::SetFromString(s, true);
                    if (cList<LISTITEM>::Last()->Enabled()) {
                       ++count;
                       logmsg = cString::sprintf("%s%s%i", *logmsg, count == 1 ? " " : ",", line);

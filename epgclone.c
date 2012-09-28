@@ -68,16 +68,9 @@ void cEpgClone::SetFromString(char *s, bool Enabled)
   dest_num = 0;
   FREE(dest_str);
   Free();
-  enabled = Enabled;
-  if (s[0] == '!')
-     string = strdup(s+1);
-  else
-     string = strdup(s);
-  if (s[0] == '!' || s[0] == '#')
-     enabled = false;
-  char *p = (s[0] == '#') ? NULL : s;
-  if (p) {
-     char *p = (s[0] == '!') ? s+1 : s;
+  cListItem::SetFromString(s, Enabled);
+  if (enabled) {
+     char *p = (s[0] == '!') ? s + 1 : s;
      char *f = strchr(p, '=');
      if (f) {
         *f = 0;

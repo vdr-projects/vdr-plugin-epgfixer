@@ -108,22 +108,22 @@ static char *htmlcharconv(char *str, struct conv_table *conv, unsigned int elem)
 {
   if (str && conv) {
      for (unsigned int i = 0; i < elem; ++i) {
-        char *ptr = strstr(str, conv[i].from);
-        while (ptr) {
-           long of = ptr - str;
-           size_t l  = strlen(str);
-           size_t l1 = strlen(conv[i].from);
-           size_t l2 = strlen(conv[i].to);
-           if (l2 > l1) {
-              error("htmlcharconv(): cannot reallocate string");
-              return str;
-              }
-           if (l2 != l1)
-              memmove(str + of + l2, str + of + l1, l - of - l1 + 1);
-           strncpy(str + of, conv[i].to, l2);
-           ptr = strstr(str, conv[i].from);
-           }
-        }
+         char *ptr = strstr(str, conv[i].from);
+         while (ptr) {
+               long of = ptr - str;
+               size_t l  = strlen(str);
+               size_t l1 = strlen(conv[i].from);
+               size_t l2 = strlen(conv[i].to);
+               if (l2 > l1) {
+                  error("htmlcharconv(): cannot reallocate string");
+                  return str;
+                  }
+               if (l2 != l1)
+                  memmove(str + of + l2, str + of + l1, l - of - l1 + 1);
+               strncpy(str + of, conv[i].to, l2);
+               ptr = strstr(str, conv[i].from);
+               }
+         }
      return str;
      }
   return NULL;
@@ -139,14 +139,14 @@ char *striphtml(char *str)
      c = str;
      r = str;
      while (*str != '\0') {
-       if (*str == '<')
-          t++;
-       else if (*str == '>')
-          t--;
-       else if (t < 1)
-          *(c++) = *str;
-       str++;
-       }
+           if (*str == '<')
+              t++;
+           else if (*str == '>')
+              t--;
+           else if (t < 1)
+              *(c++) = *str;
+           str++;
+           }
      *c = '\0';
      return htmlcharconv(r, post_conv_table, ELEMENTS(post_conv_table));
      }
@@ -198,20 +198,20 @@ void cAddEventThread::Action(void)
 {
   SetPriority(19);
   while (Running() && !LastHandleEvent.TimedOut()) {
-     cAddEventListItem *e = NULL;
-     cSchedulesLock SchedulesLock(true, 10);
-     cSchedules *schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
-     Lock();
-     while (schedules && (e = list->First()) != NULL) {
-           cSchedule *schedule = (cSchedule *)schedules->GetSchedule(Channels.GetByChannelID(e->GetChannelID()), true);
-           schedule->AddEvent(e->GetEvent());
-           EpgHandlers.SortSchedule(schedule);
-           EpgHandlers.DropOutdated(schedule, e->GetEvent()->StartTime(), e->GetEvent()->EndTime(), e->GetEvent()->TableID(), e->GetEvent()->Version());
-           list->Del(e);
-           }
-     Unlock();
-     cCondWait::SleepMs(10);
-     }
+        cAddEventListItem *e = NULL;
+        cSchedulesLock SchedulesLock(true, 10);
+        cSchedules *schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
+        Lock();
+        while (schedules && (e = list->First()) != NULL) {
+              cSchedule *schedule = (cSchedule *)schedules->GetSchedule(Channels.GetByChannelID(e->GetChannelID()), true);
+              schedule->AddEvent(e->GetEvent());
+              EpgHandlers.SortSchedule(schedule);
+              EpgHandlers.DropOutdated(schedule, e->GetEvent()->StartTime(), e->GetEvent()->EndTime(), e->GetEvent()->TableID(), e->GetEvent()->Version());
+              list->Del(e);
+              }
+        Unlock();
+        cCondWait::SleepMs(10);
+        }
 }
 
 void cAddEventThread::AddEvent(cEvent *Event, tChannelID ChannelID)
@@ -306,7 +306,7 @@ int cListItem::LoadChannelsFromString(const char *string)
            ++numchannels;
            char *d = 0;
            if (numbers && (d = strchr(c, '-')))// only true if numbers are used
-              numchannels = numchannels + atoi(d+1) - atoi(c);
+              numchannels = numchannels + atoi(d + 1) - atoi(c);
            c = strtok(NULL, ",");
            }
      free(tmpstring);
@@ -325,10 +325,10 @@ int cListItem::LoadChannelsFromString(const char *string)
            if (numbers) {
               channels_num[i] = atoi(c);
               if (char *d = strchr(c, '-')) {
-                 int count = atoi(d+1) - channels_num[i] + 1;
+                 int count = atoi(d + 1) - channels_num[i] + 1;
                  int j = 1;
                  while (j < count) {
-                       channels_num[i+j] = channels_num[i] + j;
+                       channels_num[i + j] = channels_num[i] + j;
                        ++j;
                        }
                  i = i + count;
@@ -342,6 +342,18 @@ int cListItem::LoadChannelsFromString(const char *string)
      free(tmpstring);
      }
   return numchannels;
+}
+
+void cListItem::SetFromString(char *s, bool Enabled)
+{
+  enabled = Enabled;
+  if (s[0] == '!')
+     string = strdup(s + 1);
+  else
+     string = strdup(s);
+  // disable comments and inactive lines
+  if (s[0] == '!' || s[0] == '#')
+     enabled = false;
 }
 
 void cListItem::ToggleEnabled(void)

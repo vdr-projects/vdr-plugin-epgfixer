@@ -21,8 +21,8 @@ cEpgfixerList<cRegexp, cEvent> EpgfixerRegexps;
 
 const char *strSources[] = { "title","shorttext","description","undefined" };
 
-typedef enum { ATITLE,PTITLE,TITLE,ASHORTTEXT,PSHORTTEXT,SHORTTEXT,ADESCRIPTION,PDESCRIPTION,DESCRIPTION,RATING } backrefs;
-const char *strBackrefs[] = { "atitle","ptitle","title","ashorttext","pshorttext","shorttext","adescription","pdescription","description","rating" };
+typedef enum { ATITLE, PTITLE, TITLE, ASHORTTEXT, PSHORTTEXT, SHORTTEXT, ADESCRIPTION, PDESCRIPTION, DESCRIPTION, RATING } backrefs;
+const char *strBackrefs[] = { "atitle", "ptitle", "title", "ashorttext", "pshorttext", "shorttext", "adescription", "pdescription", "description", "rating" };
 
 cRegexp::cRegexp()
 {
@@ -87,8 +87,8 @@ void cRegexp::ParseRegexp(char *restring)
            *l = 0;
            int i = 1;
            // handle all modifiers
-           while (*(l+i) != 0) {
-                 switch (*(l+i)) {
+           while (*(l + i) != 0) {
+                 switch (*(l + i)) {
                    case 'g':
                      if (restring[0] == 's')
                         replace = GLOBAL;
@@ -124,11 +124,11 @@ void cRegexp::ParseRegexp(char *restring)
            char *p = &restring[2];
            while (p = strchr(p, '/')) {
                  // check for escaped slashes
-                 if (*(p-1) != '\\') {
+                 if (*(p - 1) != '\\') {
                     *p = 0;
                     regexp = strdup(&restring[2]);
-                    if (*(p+1) != '/') // 
-                       replacement = strdup(p+1);
+                    if (*(p + 1) != '/') // 
+                       replacement = strdup(p + 1);
                     else
                        replacement = strdup("");
                     break;
@@ -151,43 +151,30 @@ void cRegexp::SetFromString(char *s, bool Enabled)
   FREE(replacement);
   Free();
   FreeCompiled();
-  enabled = Enabled;
-  bool compile = true;
-  // comments are not analysed
-  if (s[0] == '#') {
-     enabled = false;
-     source = REGEXP_UNDEFINED;
-     string = strdup(s);
-     return;
-     }
-  // inactive regexps
-  if (s[0] == '!') {
-     enabled = compile = false;
-     string = strdup(s+1);
-     }
-  else
-     string = strdup(s);
-  char *p = strchr(s, '=');
-  if (p) {
-     *p = 0;
-     ParseRegexp(p + 1);
-     char *chanfield = (s[0] == '!') ? s+1 : s;
-     char *field = chanfield;
-     // find active channels list
-     char *f = strchr(chanfield, ':');
-     if (f) {
-        *f = 0;
-        field = f+1;
-        numchannels = LoadChannelsFromString(chanfield);
-        }
-     if (strcmp(field, "title") == 0)
-        source = REGEXP_TITLE;
-     if (strcmp(field, "shorttext") == 0)
-        source = REGEXP_SHORTTEXT;
-     if (strcmp(field, "description") == 0)
-        source = REGEXP_DESCRIPTION;
-     if (compile)
+  source = REGEXP_UNDEFINED;
+  cListItem::SetFromString(s, Enabled);
+  if (enabled) {
+     char *p = strchr(s, '=');
+     if (p) {
+        *p = 0;
+        ParseRegexp(p + 1);
+        char *chanfield = (s[0] == '!') ? s + 1 : s;
+        char *field = chanfield;
+        // find active channels list
+        char *f = strchr(chanfield, ':');
+        if (f) {
+           *f = 0;
+           field = f + 1;
+           numchannels = LoadChannelsFromString(chanfield);
+           }
+        if (strcmp(field, "title") == 0)
+           source = REGEXP_TITLE;
+        if (strcmp(field, "shorttext") == 0)
+           source = REGEXP_SHORTTEXT;
+        if (strcmp(field, "description") == 0)
+           source = REGEXP_DESCRIPTION;
         Compile();
+        }
      }
 }
 
@@ -222,7 +209,7 @@ bool cRegexp::Apply(cEvent *Event)
         // loop through matches
         while ((rc = pcre_exec(re, sd, *tmpstring, tmpstringlen, start_offset, options, ovector, OVECCOUNT)) > 0) {
               last_match_end = ovector[1];
-              resultstring = cString::sprintf("%s%.*s%s", *resultstring, ovector[0]-start_offset, &tmpstring[start_offset], replacement);
+              resultstring = cString::sprintf("%s%.*s%s", *resultstring, ovector[0] - start_offset, &tmpstring[start_offset], replacement);
               options = 0;
               if (ovector[0] == ovector[1]) {
                  if (ovector[0] == tmpstringlen)
@@ -234,8 +221,8 @@ bool cRegexp::Apply(cEvent *Event)
               start_offset = ovector[1];
               }
         // replace EPG field if regexp matched
-        if (last_match_end > 0 && (last_match_end < tmpstringlen-1)) {
-           resultstring = cString::sprintf("%s%s", *resultstring, tmpstring+last_match_end);
+        if (last_match_end > 0 && (last_match_end < tmpstringlen - 1)) {
+           resultstring = cString::sprintf("%s%s", *resultstring, tmpstring + last_match_end);
            switch (source) {
              case REGEXP_TITLE:
                Event->SetTitle(resultstring);
@@ -256,7 +243,7 @@ bool cRegexp::Apply(cEvent *Event)
         const char *string;
         rc = pcre_exec(re, sd, *tmpstring, strlen(*tmpstring), 0, 0, ovector, OVECCOUNT);
         if (rc == 0) {
-           error("maximum number of captured substrings is %d\n", OVECCOUNT/3 - 1);
+           error("maximum number of captured substrings is %d\n", OVECCOUNT / 3 - 1);
            }
         else if (rc > 0) {
            int i = 0;

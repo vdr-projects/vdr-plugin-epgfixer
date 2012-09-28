@@ -45,8 +45,8 @@ bool cEpgfixerSetup::ProcessArgs(int argc, char *argv[])
 bool cEpgfixerSetup::SetupParse(const char *Name, const char *Value)
 {
   const char *pt;
-  if (*m_ProcessedArgs && NULL != (pt=strstr(m_ProcessedArgs+1, Name)) &&
-      *(pt-1) == ' ' && *(pt+strlen(Name)) == ' ') {
+  if (*m_ProcessedArgs && NULL != (pt = strstr(m_ProcessedArgs + 1, Name)) &&
+      *(pt - 1) == ' ' && *(pt + strlen(Name)) == ' ') {
      dsyslog("Skipping configuration entry %s=%s (overridden in command line)", Name, Value);
      return true;
      }
