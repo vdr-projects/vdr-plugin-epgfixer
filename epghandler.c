@@ -14,13 +14,38 @@
 #include <vdr/tools.h>
 #include <string.h>
 
+//
+// Original VDR bug fixes adapted from epg.c of VDR
+// by Klaus Schmidinger
+//
+
+static void StripControlCharacters(char *s)
+{
+  if (s) {
+     int len = strlen(s);
+     while (len > 0) {
+           int l = Utf8CharLen(s);
+           uchar *p = (uchar *)s;
+           if (l == 2 && *p == 0xC2) // UTF-8 sequence
+              p++;
+           if (*p == 0x86 || *p == 0x87) {
+              memmove(s, p + 1, len - l + 1); // we also copy the terminating 0!
+              len -= l;
+              l = 0;
+              }
+           s += l;
+           len -= l;
+           }
+     }
+}
 
 void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
 {
-  if (isempty(event->Title())) {
-     // we don't want any "(null)" titles
-     event->SetTitle("No title");
-     }
+  // Copy event title, shorttext and description to temporary variables
+  // we don't want any "(null)" titles
+  char *title = event->Title() ? strdup(event->Title()) : strdup("No title");
+  char *shortText = event->ShortText() ? strdup(event->ShortText()) : NULL;
+  char *description = event->Description() ? strdup(event->Description()) : NULL;
 
   // Some TV stations apparently have their own idea about how to fill in the
   // EPG data. Let's fix their bugs as good as we can:
@@ -31,8 +56,8 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // Title
   // "ShortText". Description
   //
-  if (EpgfixerSetup.quotedshorttext && (event->ShortText() == NULL) != (event->Description() == NULL)) {
-     char *p = event->ShortText() ? strdup(event->ShortText()) : strdup(event->Description());
+  if (EpgfixerSetup.quotedshorttext && (shortText == NULL) != (description == NULL)) {
+     char *p = shortText ? shortText : description;
      if (*p == '"') {
         const char *delim = "\".";
         char *e = strstr(p + 1, delim);
@@ -40,11 +65,12 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
            *e = 0;
            char *s = strdup(p + 1);
            char *d = strdup(e + strlen(delim));
-           event->SetShortText(s);
-           event->SetDescription(d);
+           free(shortText);
+           free(description);
+           shortText = s;
+           description = d;
            }
         }
-        free(p);
      }
 
   // Some channels put the Description into the ShortText (preceded
@@ -54,13 +80,11 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // Title
   //  Description
   //
-  if (EpgfixerSetup.blankbeforedescription && event->ShortText() && !event->Description()) {
-     if (*event->ShortText() == ' ') {
-        char *shortText = strdup(event->ShortText());
+  if (EpgfixerSetup.blankbeforedescription && shortText && !description) {
+     if (*shortText == ' ') {
         memmove(shortText, shortText + 1, strlen(shortText));
-        event->SetDescription(shortText);
-        event->SetShortText(NULL);
-        free(shortText);
+        description = shortText;
+        shortText = NULL;
         }
      }
 
@@ -69,8 +93,9 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // Title
   // Title
   //
-  if (EpgfixerSetup.repeatedtitle && event->ShortText() && strcmp(event->Title(), event->ShortText()) == 0) {
-     event->SetShortText(NULL);
+  if (EpgfixerSetup.repeatedtitle && shortText && strcmp(title, shortText) == 0) {
+     free(shortText);
+     shortText = NULL;
      }
 
   // Some channels put the ShortText between double quotes, which is nothing
@@ -79,8 +104,7 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // Title
   // "ShortText"[.]
   //
-  if (EpgfixerSetup.doublequotedshorttext && event->ShortText() && *event->ShortText() == '"') {
-     char *shortText = strdup(event->ShortText());
+  if (EpgfixerSetup.doublequotedshorttext && shortText && *shortText == '"') {
      int l = strlen(shortText);
      if (l > 2 && (shortText[l - 1] == '"' || (shortText[l - 1] == '.' && shortText[l - 2] == '"'))) {
         memmove(shortText, shortText + 1, l);
@@ -88,8 +112,6 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
         if (p)
            *p = 0;
         }
-     event->SetShortText(shortText);
-     free(shortText);
      }
 
   // Some channels apparently try to do some formatting in the texts,
@@ -97,20 +119,9 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // of the window that will actually display the text.
   // Remove excess whitespace:
   if (EpgfixerSetup.removeformatting) {
-     char *temp;
-     temp = strdup(event->Title());
-     event->SetTitle(compactspace(temp));
-     free(temp);
-     if (event->ShortText()) {
-        temp = strdup(event->ShortText());
-        event->SetShortText(compactspace(temp));
-        free(temp);
-        }
-     if (event->Description()) {
-        temp = strdup(event->Description());
-        event->SetDescription(compactspace(temp));
-        free(temp);
-        }
+     title = compactspace(title);
+     shortText = compactspace(shortText);
+     description = compactspace(description);
      }
 
 #define MAX_USEFUL_EPISODE_LENGTH 40
@@ -118,40 +129,34 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   // the Description totally empty. So if the ShortText length exceeds
   // MAX_USEFUL_EPISODE_LENGTH, let's put this into the Description
   // instead:
-  if (EpgfixerSetup.longshorttext && !isempty(event->ShortText()) && isempty(event->Description())) {
-     if (strlen(event->ShortText()) > MAX_USEFUL_EPISODE_LENGTH) {
-        event->SetDescription(event->ShortText());
-        event->SetShortText(NULL);
+  if (EpgfixerSetup.longshorttext && !isempty(shortText) && isempty(description)) {
+     if (strlen(shortText) > MAX_USEFUL_EPISODE_LENGTH) {
+        free(description);
+        description = shortText;
+        shortText = NULL;
         }
      }
 
   // Some channels put the same information into ShortText and Description.
   // In that case we delete one of them:
-  if (EpgfixerSetup.equalshorttextanddescription && event->ShortText() && event->Description() && strcmp(event->ShortText(), event->Description()) == 0) {
-     if (strlen(event->ShortText()) > MAX_USEFUL_EPISODE_LENGTH)
-        event->SetShortText(NULL);
-     else
-        event->SetDescription(NULL);
+  if (EpgfixerSetup.equalshorttextanddescription && shortText && description && strcmp(shortText, description) == 0) {
+     if (strlen(shortText) > MAX_USEFUL_EPISODE_LENGTH) {
+        free(shortText);
+        shortText = NULL;
+        }
+     else {
+        free(description);
+        description = NULL;
+        }
      }
 
   // Some channels use the ` ("backtick") character, where a ' (single quote)
   // would be normally used. Actually, "backticks" in normal text don't make
   // much sense, so let's replace them:
   if (EpgfixerSetup.nobackticks) {
-     char *temp;
-     temp = strdup(event->Title());
-     event->SetTitle(strreplace(temp, '`', '\''));
-     free(temp);
-     if (event->ShortText()) {
-        temp = strdup(event->ShortText());
-        event->SetShortText(strreplace(temp, '`', '\''));
-        free(temp);
-        }
-     if (event->Description()) {
-        temp = strdup(event->Description());
-        event->SetDescription(strreplace(temp, '`', '\''));
-        free(temp);
-        }
+     strreplace(title, '`', '\'');
+     strreplace(shortText, '`', '\'');
+     strreplace(description, '`', '\'');
      }
 
   // The stream components have a "description" field which some channels
@@ -218,14 +223,8 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
 
   // VDR can't usefully handle newline characters in the title, shortText or component description of EPG
   // data, so let's always convert them to blanks (independent of the setting of EPGBugfixLevel):
-  char *temp = strdup(event->Title());
-  event->SetTitle(strreplace(temp, '\n', ' '));
-  free(temp);
-  if (event->ShortText()) {
-     temp = strdup(event->ShortText());
-     event->SetShortText(strreplace(temp, '\n', ' '));
-     free(temp);
-     }
+  strreplace(title, '\n', ' ');
+  strreplace(shortText, '\n', ' ');
   if (components) {
      for (int i = 0; i < components->NumComponents(); ++i) {
          tComponent *p = components->Component(i);
@@ -233,6 +232,14 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
             strreplace(p->description, '\n', ' ');
          }
      }
+  // Same for control characters:
+  StripControlCharacters(title);
+  StripControlCharacters(shortText);
+  StripControlCharacters(description);
+  // Set modified data back to event
+  event->SetTitle(title);
+  event->SetShortText(shortText);
+  event->SetDescription(description);
 }
 
 bool cEpgfixerEpgHandler::FixBugs(cEvent *Event)
