@@ -10,7 +10,6 @@
 /* Global instance */
 cEpgfixerList<cBlacklist, cChannel> EpgfixerBlacklists;
 
-
 bool cBlacklist::Apply(cChannel *Channel)
 {
   if (enabled && IsActive(Channel->GetChannelID()))

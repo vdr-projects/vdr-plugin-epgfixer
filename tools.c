@@ -153,13 +153,14 @@ char *striphtml(char *str)
   return NULL;
 }
 
-// --- cAddEventThread ----------------------------------------
+// --- cAddEventThread --------------------------------------------------
 
 class cAddEventListItem : public cListObject
 {
 protected:
   cEvent *event;
   tChannelID channelID;
+
 public:
   cAddEventListItem(cEvent *Event, tChannelID ChannelID) { event = Event; channelID = ChannelID; }
   tChannelID GetChannelID() { return channelID; }
@@ -173,8 +174,10 @@ private:
   cTimeMs LastHandleEvent;
   cList<cAddEventListItem> *list;
   enum { INSERT_TIMEOUT_IN_MS = 10000 };
+
 protected:
   virtual void Action(void);
+
 public:
   cAddEventThread(void);
   ~cAddEventThread(void);
@@ -223,7 +226,7 @@ void cAddEventThread::AddEvent(cEvent *Event, tChannelID ChannelID)
 
 static cAddEventThread AddEventThread;
 
-// ---
+// --- Add event to schedule --------------------------------------------
 
 void AddEvent(cEvent *Event, tChannelID ChannelID)
 {
@@ -232,7 +235,7 @@ void AddEvent(cEvent *Event, tChannelID ChannelID)
      AddEventThread.Start();
 }
 
-// --- Listitem ----------------------------------------
+// --- Listitem ---------------------------------------------------------
 
 cListItem::cListItem()
 {

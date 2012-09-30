@@ -17,6 +17,8 @@
 
 #define FREE(x) { free(x); x = NULL; }
 
+// --- Add event to schedule --------------------------------------------
+
 void AddEvent(cEvent *event, tChannelID ChannelID);
 
 char *striphtml(char *str);
@@ -34,6 +36,7 @@ protected:
   int GetChannelNum(int index);
   int LoadChannelsFromString(const char *string);
   bool IsActive(tChannelID ChannelID);
+
 public:
   cListItem();
   virtual ~cListItem();
@@ -41,77 +44,84 @@ public:
   virtual bool Apply(cEvent *Event) { return 0; }
   void SetFromString(char *string, bool Enabled);
   const char *GetString() { return string; }
-  bool Enabled(void) { return enabled; }
+  bool IsEnabled(void) { return enabled; }
   void ToggleEnabled(void);
   void PrintConfigLineToFile(FILE *f);
 };
+
+// --- cEpgfixerList ----------------------------------------------------
 
 template<class LISTITEM, class PARAMETER> class cEpgfixerList : public cList<LISTITEM>
 {
 protected:
   char *fileName;
-  bool LoadConfigFile(bool AllowComments = true)
-  {
-    bool result = false;
-    if (fileName && access(fileName, F_OK) == 0) {
-       FILE *f = fopen(fileName, "r");
-       if (f) {
-          char *s;
-          int line = 0;
-          int count = 0;
-          cReadLine ReadLine;
-          cString logmsg("");
-          logmsg = cString::sprintf("%s%s loaded. Active lines:", *logmsg, fileName);
-          while ((s = ReadLine.Read(f)) != NULL) {
-                ++line;
-                if (!isempty(s)) {
-                   this->Add(new LISTITEM());
-                   cList<LISTITEM>::Last()->LISTITEM::SetFromString(s, true);
-                   if (cList<LISTITEM>::Last()->Enabled()) {
-                      ++count;
-                      logmsg = cString::sprintf("%s%s%i", *logmsg, count == 1 ? " " : ",", line);
-                      }
-                   }
-                }
-          fclose(f);
-          if (count == 0)
-            logmsg = cString::sprintf("%s none", *logmsg);
-          isyslog("%s", *logmsg);
-          }
-       else {
-          LOG_ERROR_STR(fileName);
-          result = false;
-          }
-       }
-    ;
-    return result;
-  }
+  bool LoadConfigFile(bool AllowComments = true);
 
 public:
   cEpgfixerList() { fileName = NULL; }
   ~cEpgfixerList() { free(fileName); }
   void Clear(void) { cList<LISTITEM>::Clear(); }
-  bool ReloadConfigFile(bool AllowComments = true)
-  {
-    Clear();
-    return LoadConfigFile(AllowComments);
-  }
-  bool Apply(PARAMETER *Parameter)
-  {
-    int res = false;
-    LISTITEM *item = (LISTITEM *)(cList<LISTITEM>::First());
-    while (item) {
-          if (item->Enabled()) {
-             int ret = item->LISTITEM::Apply(Parameter);
-             if (ret && !res)
-                res = true;
-             }
-          item = (LISTITEM *)(item->Next());
-          }
-    return res;
-  }
+  bool ReloadConfigFile(bool AllowComments = true);
+  bool Apply(PARAMETER *Parameter);
   void SetConfigFile(const char *FileName) { fileName = strdup(FileName); }
   const char *GetConfigFile() { return fileName; }
 };
+
+template<class LISTITEM, class PARAMETER> bool cEpgfixerList<LISTITEM, PARAMETER>::LoadConfigFile(bool AllowComments)
+{
+  bool result = false;
+  if (fileName && access(fileName, F_OK) == 0) {
+     FILE *f = fopen(fileName, "r");
+     if (f) {
+        char *s;
+        int line = 0;
+        int count = 0;
+        cReadLine ReadLine;
+        cString logmsg("");
+        logmsg = cString::sprintf("%s%s loaded. Active lines:", *logmsg, fileName);
+        while ((s = ReadLine.Read(f)) != NULL) {
+              ++line;
+              if (!isempty(s)) {
+                 this->Add(new LISTITEM());
+                 cList<LISTITEM>::Last()->LISTITEM::SetFromString(s, true);
+                 if (cList<LISTITEM>::Last()->IsEnabled()) {
+                    ++count;
+                    logmsg = cString::sprintf("%s%s%i", *logmsg, count == 1 ? " " : ",", line);
+                    }
+                 }
+              }
+        fclose(f);
+        if (count == 0)
+          logmsg = cString::sprintf("%s none", *logmsg);
+        isyslog("%s", *logmsg);
+        }
+     else {
+        LOG_ERROR_STR(fileName);
+        result = false;
+        }
+     }
+  return result;
+}
+
+template<class LISTITEM, class PARAMETER> bool cEpgfixerList<LISTITEM, PARAMETER>::ReloadConfigFile(bool AllowComments)
+{
+  Clear();
+  return LoadConfigFile(AllowComments);
+}
+
+template<class LISTITEM, class PARAMETER> bool cEpgfixerList<LISTITEM, PARAMETER>::Apply(PARAMETER *Parameter)
+{
+  int res = false;
+  LISTITEM *item = (LISTITEM *)(cList<LISTITEM>::First());
+  while (item) {
+        if (item->IsEnabled()) {
+           int ret = item->LISTITEM::Apply(Parameter);
+           if (ret && !res)
+              res = true;
+           }
+        item = (LISTITEM *)(item->Next());
+        }
+  return res;
+}
 
 #endif //__EPGFIXER_TOOLS_H_

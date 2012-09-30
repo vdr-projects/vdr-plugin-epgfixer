@@ -71,7 +71,7 @@ protected:
     int i = 0;
     LISTITEM *item = (LISTITEM *)list->First();
     while (i < list->Count()) {
-          item->SetFromString(lines[i], item->Enabled());
+          item->SetFromString(lines[i], item->IsEnabled());
           item = (LISTITEM *)item->Next();
           ++i;
           }
@@ -82,7 +82,7 @@ protected:
     int i = 0;
     LISTITEM *item = (LISTITEM *)list->First();
     while (i < list->Count()) {
-          Add(new cMenuEditStrItem(item->Enabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, tr(RegexpChars)));
+          Add(new cMenuEditStrItem(item->IsEnabled() ? "+" : "-", lines[i], MAXREGEXPLENGTH, tr(RegexpChars)));
           item = (LISTITEM *)item->Next();
           ++i;
           }
@@ -223,7 +223,7 @@ void cMenuSetupEpgfixer::Store(void)
   SetupStore("PreventEqualShortTextAndDescription", EpgfixerSetup.equalshorttextanddescription);
   SetupStore("ReplaceBackticksWithSingleQuotes",    EpgfixerSetup.nobackticks);
   SetupStore("FixStreamComponentDescriptions",      EpgfixerSetup.components);
-  SetupStore("StripHTMLentities",           		EpgfixerSetup.striphtml);
+  SetupStore("StripHTMLentities",                   EpgfixerSetup.striphtml);
 
   Setup.Save();
 }

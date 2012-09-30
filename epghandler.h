@@ -17,6 +17,7 @@ private:
   bool FixCharSets(cEvent *Event);
   bool FixBugs(cEvent *Event);
   void StripHTML(cEvent *Event);
+
 public:
   cEpgfixerEpgHandler(void) {};
   virtual bool HandleEvent(cEvent *Event);

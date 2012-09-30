@@ -17,9 +17,11 @@ class cMenuSetupEpgfixer : public cMenuSetupPage
 private:
   cEpgfixerSetup newconfig;
   cVector<const char*> help;
+
 protected:
   virtual void Store(void);
   void Set(void);
+
 public:
   cMenuSetupEpgfixer(void);
   virtual eOSState ProcessKey(eKeys Key);

@@ -15,7 +15,7 @@
 #include <pcre.h>
 #endif
 
-typedef enum { REGEXP_TITLE,REGEXP_SHORTTEXT,REGEXP_DESCRIPTION,REGEXP_UNDEFINED } sources;
+typedef enum { REGEXP_TITLE, REGEXP_SHORTTEXT, REGEXP_DESCRIPTION, REGEXP_UNDEFINED } sources;
 
 class cRegexp : public cListItem
 {
@@ -30,6 +30,7 @@ private:
   void Compile();
   void FreeCompiled();
   void ParseRegexp(char *restring);
+
 public:
   cRegexp();
   virtual ~cRegexp();

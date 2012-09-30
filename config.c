@@ -36,7 +36,6 @@ bool cEpgfixerSetup::ProcessArg(const char *Name, const char *Value)
   return false;
 }
 
-
 bool cEpgfixerSetup::ProcessArgs(int argc, char *argv[])
 {
   return true;
@@ -60,7 +59,7 @@ bool cEpgfixerSetup::SetupParse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "PreventEqualShortTextAndDescription")) equalshorttextanddescription = atoi(Value);
   else if (!strcasecmp(Name, "ReplaceBackticksWithSingleQuotes"))    nobackticks = atoi(Value);
   else if (!strcasecmp(Name, "FixStreamComponentDescriptions"))      components = atoi(Value);
-  else if (!strcasecmp(Name, "StripHTMLEntities"))      			 striphtml = atoi(Value);
+  else if (!strcasecmp(Name, "StripHTMLEntities"))                   striphtml = atoi(Value);
   else
      return false;
 

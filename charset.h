@@ -16,6 +16,7 @@ class cCharSet : public cListItem
 private:
   char *origcharset;
   char *realcharset;
+
 public:
   cCharSet();
   virtual ~cCharSet();

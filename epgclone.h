@@ -17,6 +17,7 @@ private:
   int dest_num;
   char *dest_str;
   void CloneEvent(cEvent *Source, cEvent *Dest);
+
 public:
   cEpgClone();
   virtual ~cEpgClone();
