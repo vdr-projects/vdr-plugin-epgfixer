@@ -252,32 +252,41 @@ bool cRegexp::Apply(cEvent *Event)
            while (i < 10) {
              if (pcre_get_named_substring(re, tmpstring, ovector, rc, strBackrefs[i], &string) != PCRE_ERROR_NOSUBSTRING) {
                 switch (i) {
+                  case ATITLE:
+                  case PTITLE:
+                    if (Event->Title()) {
+                       if (i == ATITLE)
+                          Event->SetTitle(*cString::sprintf("%s %s", Event->Title(), string));
+                       else
+                          Event->SetTitle(*cString::sprintf("%s %s", string, Event->Title()));
+                       break;
+                       }
                   case TITLE:
                     Event->SetTitle(string);
                     break;
-                  case ATITLE:
-                    Event->SetTitle(*cString::sprintf("%s %s", Event->Title(), string));
-                    break;
-                  case PTITLE:
-                    Event->SetTitle(*cString::sprintf("%s %s", string, Event->Title()));
-                    break;
+                  case ASHORTTEXT:
+                  case PSHORTTEXT:
+                    if (Event->ShortText()) {
+                       if (i == ASHORTTEXT)
+                          Event->SetShortText(*cString::sprintf("%s %s", Event->ShortText(), string));
+                       else
+                          Event->SetShortText(*cString::sprintf("%s %s", string, Event->ShortText()));
+                       break;
+                       }
                   case SHORTTEXT:
                     Event->SetShortText(string);
                     break;
-                  case ASHORTTEXT:
-                    Event->SetShortText(*cString::sprintf("%s %s", Event->ShortText(), string));
-                    break;
-                  case PSHORTTEXT:
-                    Event->SetShortText(*cString::sprintf("%s %s", string, Event->ShortText()));
-                    break;
+                  case ADESCRIPTION:
+                  case PDESCRIPTION:
+                    if (Event->Description()) {
+                       if (i == ADESCRIPTION)
+                          Event->SetDescription(*cString::sprintf("%s %s", Event->Description(), string));
+                       else
+                          Event->SetDescription(*cString::sprintf("%s %s", string, Event->Description()));
+                       break;
+                       }
                   case DESCRIPTION:
                     Event->SetDescription(string);
-                    break;
-                  case ADESCRIPTION:
-                    Event->SetDescription(*cString::sprintf("%s %s", Event->Description(), string));
-                    break;
-                  case PDESCRIPTION:
-                    Event->SetDescription(*cString::sprintf("%s %s", string, Event->Description()));
                     break;
                   case RATING:
                     Event->SetParentalRating(atoi(string));
