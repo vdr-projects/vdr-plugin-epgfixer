@@ -22,7 +22,7 @@
 #define GITVERSION ""
 #endif
 
-static const char VERSION[]        = "0.2.1" GITVERSION;
+static const char VERSION[]        = "0.3.0" GITVERSION;
 static const char DESCRIPTION[]    = trNOOP("Fix bugs in EPG");
 
 class cPluginEpgfixer : public cPlugin {

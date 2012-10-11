@@ -1,7 +1,7 @@
 VDR Plugin 'epgfixer' Revision History
 --------------------------------------
 
-2012-09-xx: Version 0.3.0
+2012-10-11: Version 0.3.0
 
 - Enable JIT compiling in PCRE if supported.
 - Support for channel intervals for channel numbers.
