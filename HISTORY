@@ -7,6 +7,8 @@ VDR Plugin 'epgfixer' Revision History
 - Support for channel intervals for channel numbers.
 - Support search-and-replace using Perl-style 's///' operator.
 - Support Perl-style modifiers when using 's///' or 'm//' operators.
+- Fix appending and prepending to EPG fields.
+- Support stripping control characters from EPG data as in VDR-1.7.31.
 
 2012-05-13: Version 0.2.1
 
