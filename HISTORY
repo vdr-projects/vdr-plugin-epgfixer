@@ -1,6 +1,11 @@
 VDR Plugin 'epgfixer' Revision History
 --------------------------------------
 
+2012-11-28: Version 0.3.1
+
+- Fix memory leak.
+- Drop OBJS dependency from cppcheck target (thanks to Ville Skyttä).
+
 2012-10-11: Version 0.3.0
 
 - Enable JIT compiling in PCRE if supported.
