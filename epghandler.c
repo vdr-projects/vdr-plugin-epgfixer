@@ -240,6 +240,10 @@ void cEpgfixerEpgHandler::FixOriginalEpgBugs(cEvent *event)
   event->SetTitle(title);
   event->SetShortText(shortText);
   event->SetDescription(description);
+
+  free(title);
+  free(shortText);
+  free(description);
 }
 
 bool cEpgfixerEpgHandler::FixBugs(cEvent *Event)
