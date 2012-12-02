@@ -221,7 +221,7 @@ bool cRegexp::Apply(cEvent *Event)
               start_offset = ovector[1];
               }
         // replace EPG field if regexp matched
-        if (last_match_end > 0 && (last_match_end < tmpstringlen - 1)) {
+        if (last_match_end > 0 && (last_match_end <= tmpstringlen)) {
            resultstring = cString::sprintf("%s%s", *resultstring, tmpstring + last_match_end);
            switch (source) {
              case REGEXP_TITLE:
@@ -240,7 +240,7 @@ bool cRegexp::Apply(cEvent *Event)
            }
         }
      else {// use backreferences
-        const char *string;
+        const char *capturestring;
         rc = pcre_exec(re, sd, *tmpstring, strlen(*tmpstring), 0, 0, ovector, OVECCOUNT);
         if (rc == 0) {
            error("maximum number of captured substrings is %d\n", OVECCOUNT / 3 - 1);
@@ -250,51 +250,51 @@ bool cRegexp::Apply(cEvent *Event)
            // loop through all possible backreferences
            // TODO allow duplicate backreference names?
            while (i < 10) {
-             if (pcre_get_named_substring(re, tmpstring, ovector, rc, strBackrefs[i], &string) != PCRE_ERROR_NOSUBSTRING) {
+             if (pcre_get_named_substring(re, tmpstring, ovector, rc, strBackrefs[i], &capturestring) != PCRE_ERROR_NOSUBSTRING) {
                 switch (i) {
                   case ATITLE:
                   case PTITLE:
                     if (Event->Title()) {
                        if (i == ATITLE)
-                          Event->SetTitle(*cString::sprintf("%s %s", Event->Title(), string));
+                          Event->SetTitle(*cString::sprintf("%s %s", Event->Title(), capturestring));
                        else
-                          Event->SetTitle(*cString::sprintf("%s %s", string, Event->Title()));
+                          Event->SetTitle(*cString::sprintf("%s %s", capturestring, Event->Title()));
                        break;
                        }
                   case TITLE:
-                    Event->SetTitle(string);
+                    Event->SetTitle(capturestring);
                     break;
                   case ASHORTTEXT:
                   case PSHORTTEXT:
                     if (Event->ShortText()) {
                        if (i == ASHORTTEXT)
-                          Event->SetShortText(*cString::sprintf("%s %s", Event->ShortText(), string));
+                          Event->SetShortText(*cString::sprintf("%s %s", Event->ShortText(), capturestring));
                        else
-                          Event->SetShortText(*cString::sprintf("%s %s", string, Event->ShortText()));
+                          Event->SetShortText(*cString::sprintf("%s %s", capturestring, Event->ShortText()));
                        break;
                        }
                   case SHORTTEXT:
-                    Event->SetShortText(string);
+                    Event->SetShortText(capturestring);
                     break;
                   case ADESCRIPTION:
                   case PDESCRIPTION:
                     if (Event->Description()) {
                        if (i == ADESCRIPTION)
-                          Event->SetDescription(*cString::sprintf("%s %s", Event->Description(), string));
+                          Event->SetDescription(*cString::sprintf("%s %s", Event->Description(), capturestring));
                        else
-                          Event->SetDescription(*cString::sprintf("%s %s", string, Event->Description()));
+                          Event->SetDescription(*cString::sprintf("%s %s", capturestring, Event->Description()));
                        break;
                        }
                   case DESCRIPTION:
-                    Event->SetDescription(string);
+                    Event->SetDescription(capturestring);
                     break;
                   case RATING:
-                    Event->SetParentalRating(atoi(string));
+                    Event->SetParentalRating(atoi(capturestring));
                     break;
                   default:
                     break;
                   }
-                pcre_free_substring(string);
+                pcre_free_substring(capturestring);
                 }
               ++i;
               }
