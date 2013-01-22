@@ -29,6 +29,8 @@ TMPDIR ?= /tmp
 ### Regexp
 ifeq (exists, $(shell pkg-config libpcre && echo exists))
 	REGEXLIB = pcre
+else
+$(error PCRE library required)
 endif
 
 ### Make sure that necessary options are included:
