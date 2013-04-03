@@ -94,6 +94,7 @@ template<class LISTITEM, class PARAMETER> bool cEpgfixerList<LISTITEM, PARAMETER
         if (count == 0)
           logmsg = cString::sprintf("%s none", *logmsg);
         isyslog("%s", *logmsg);
+        result = true;
         }
      else {
         LOG_ERROR_STR(fileName);
