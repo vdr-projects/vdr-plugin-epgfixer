@@ -155,7 +155,7 @@ bool cPluginEpgfixer::Service(const char *Id, void *Data)
 const char **cPluginEpgfixer::SVDRPHelpPages(void)
 {
   static const char *HelpPages[] = {
-    "RLAL\n"
+    "REL\n"
     "    Reload all configs.",
     "RLRE\n"
     "    Reload regexp.conf.",
