@@ -205,7 +205,7 @@ cString cPluginEpgfixer::SVDRPCommand(const char *Command, const char *Option, i
      }
   }
   else if (strcasecmp(Command, "REL") == 0) {
-     if (EpgfixerCharSets.ReloadConfigFile() &&
+     if (EpgfixerRegexps.ReloadConfigFile() &&
          EpgfixerCharSets.ReloadConfigFile() &&
          EpgfixerBlacklists.ReloadConfigFile() &&
          EpgfixerEpgClones.ReloadConfigFile()) {
