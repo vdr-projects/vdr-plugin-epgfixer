@@ -86,7 +86,10 @@ protected:
           item = (LISTITEM *)item->Next();
           ++i;
           }
-    SetHelp(trVDR("Button$On/Off"), trVDR("Button$New"), trVDR("Button$Delete"), tr("Button$Cancel"));
+    if (list->Count() > 0)
+        SetHelp(trVDR("Button$On/Off"), trVDR("Button$New"), trVDR("Button$Delete"), tr("Button$Cancel"));
+    else
+        SetHelp(NULL,trVDR("Button$New"), NULL, tr("Button$Cancel"));
     Display();
   }
 public:
@@ -111,9 +114,11 @@ public:
     if (state == osUnknown) {
        switch (Key) {
          case kRed:
-           list->Get(Current())->ToggleEnabled();
-           Set();
-           Display();
+           if (list->Count() > 0) {
+              list->Get(Current())->ToggleEnabled();
+              Set();
+              Display();
+              }
            state = osContinue;
            break;
          case kGreen:
@@ -126,12 +131,14 @@ public:
            state = osContinue;
            break;
          case kYellow:
-           Store();
-           FreeArray();
-           list->Del(list->Get(Current()),true);
-           LoadListToArray();
-           Set();
-           Display();
+           if (list->Count() > 0) {
+              Store();
+              FreeArray();
+              list->Del(list->Get(Current()),true);
+              LoadListToArray();
+              Set();
+              Display();
+              }
            state = osContinue;
            break;
          case kBlue:
