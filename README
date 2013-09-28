@@ -60,9 +60,15 @@ General syntax of configuration files:
   numbers but not both.
 - Channel intervals (e.g. 1-10) can be used for channel numbers.
 
-Syntax of regexp.conf line is "Channel_list:Parsed_epg_field=Regexp" with:
-- Parsed_epg_field is the EPG field for which the regular expression is applied
+Syntax of regexp.conf line is 
+"Channel_list:Parsed_field?Conditional_field~Conditional_Regexp=Regexp" with:
+- Parsed_field is the EPG field for which the regular expression is applied
   with available field names title, shorttext and description.
+- Conditional_field and Conditional_Regexp are optional parameters to control 
+  when Regexp is applied.
+- Conditional_field is identical to Parsed_field.
+- Conditional_Regexp has to be a Perl-style 'm/PATTERN/' as described below
+  except it is only used for matching (i.e. backreferences are ignored).
 - Regular expressions can be used in different ways: Perl-style 
   's/PATTERN/REPLACEMENT/' and 'm/PATTERN/' operators or simply using 'PATTERN'
   of which the latter two use named backreferences.
