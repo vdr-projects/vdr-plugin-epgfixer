@@ -30,6 +30,7 @@ private:
   pcre_extra *sd;
   void Compile();
   void FreeCompiled();
+  int ParseModifiers(char *modstring, int substitution = 0);
   void ParseRegexp(char *restring);
 
 public:

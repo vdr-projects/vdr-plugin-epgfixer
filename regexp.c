@@ -78,6 +78,44 @@ void cRegexp::FreeCompiled()
      }
 }
 
+
+int cRegexp::ParseModifiers(char *modstring, int substitution)
+{
+  int i = 0;
+  int mods = 0;
+  // handle all modifiers
+  while (*(modstring + i) != 0) {
+       switch (*(modstring + i)) {
+         case 'g':
+           if (substitution)
+              replace = GLOBAL;
+           break;
+         case 'i':
+           mods |= PCRE_CASELESS;
+           break;
+         case 'm':
+           mods |= PCRE_MULTILINE;
+           break;
+         case 's':
+           mods |= PCRE_DOTALL;
+           break;
+         case 'u':
+           mods |= PCRE_UTF8;
+           break;
+         case 'x':
+           mods |= PCRE_EXTENDED;
+           break;
+         case 'X':
+           mods |= PCRE_EXTRA;
+           break;
+         default:
+           break;
+         }
+       i++;
+       }
+  return mods;
+}
+
 void cRegexp::ParseRegexp(char *restring)
 {
   if (restring) {
@@ -87,37 +125,7 @@ void cRegexp::ParseRegexp(char *restring)
         char *l = strrchr(restring, '/');
         if (l) {
            *l = 0;
-           int i = 1;
-           // handle all modifiers
-           while (*(l + i) != 0) {
-                 switch (*(l + i)) {
-                   case 'g':
-                     if (restring[0] == 's')
-                        replace = GLOBAL;
-                     break;
-                   case 'i':
-                     modifiers = modifiers | PCRE_CASELESS;
-                     break;
-                   case 'm':
-                     modifiers = modifiers | PCRE_MULTILINE;
-                     break;
-                   case 's':
-                     modifiers = modifiers | PCRE_DOTALL;
-                     break;
-                   case 'u':
-                     modifiers = modifiers | PCRE_UTF8;
-                     break;
-                   case 'x':
-                     modifiers = modifiers | PCRE_EXTENDED;
-                     break;
-                   case 'X':
-                     modifiers = modifiers | PCRE_EXTRA;
-                     break;
-                   default:
-                     break;
-                   }
-                 i++;
-                 }
+           modifiers = ParseModifiers(l + 1, restring[0] == 's');
            }
         // parse regexp format 's///'
         if (restring[0] == 's') {
@@ -200,13 +208,13 @@ bool cRegexp::Apply(cEvent *Event)
        }
      if (!*tmpstring)
         tmpstring = "";
+     int tmpstringlen = strlen(*tmpstring);
      int ovector[OVECCOUNT];
      int rc = 0;
      if (replace != NONE) {// find and replace
         int last_match_end = -1;
         int options = 0;
         int start_offset = 0;
-        int tmpstringlen = strlen(*tmpstring);
         cString resultstring = "";
         // loop through matches
         while ((rc = pcre_exec(re, sd, *tmpstring, tmpstringlen, start_offset, options, ovector, OVECCOUNT)) > 0) {
@@ -243,7 +251,7 @@ bool cRegexp::Apply(cEvent *Event)
         }
      else {// use backreferences
         const char *capturestring;
-        rc = pcre_exec(re, sd, *tmpstring, strlen(*tmpstring), 0, 0, ovector, OVECCOUNT);
+        rc = pcre_exec(re, sd, *tmpstring, tmpstringlen, 0, 0, ovector, OVECCOUNT);
         if (rc == 0) {
            error("maximum number of captured substrings is %d\n", OVECCOUNT / 3 - 1);
            }

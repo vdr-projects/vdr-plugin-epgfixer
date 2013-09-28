@@ -167,7 +167,7 @@ public:
 
 cMenuSetupEpgfixer::cMenuSetupEpgfixer(void)
 {
-  memcpy(&newconfig, &EpgfixerSetup, sizeof(cEpgfixerSetup));
+  newconfig = EpgfixerSetup;
   Set();
 }
 
@@ -223,7 +223,7 @@ void cMenuSetupEpgfixer::Set(void)
 
 void cMenuSetupEpgfixer::Store(void)
 {
-  memcpy(&EpgfixerSetup, &newconfig, sizeof(cEpgfixerSetup));
+  EpgfixerSetup = newconfig;
 
   SetupStore("RemoveQuotesFromShortText",           EpgfixerSetup.quotedshorttext);
   SetupStore("MoveDescriptionFromShortText",        EpgfixerSetup.blankbeforedescription);

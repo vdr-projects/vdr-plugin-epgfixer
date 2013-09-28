@@ -8,11 +8,8 @@
 #ifndef __EPGFIXER_CONFIG_H_
 #define __EPGFIXER_CONFIG_H_
 
-#include <vdr/tools.h>
-
-class cEpgfixerSetup
+struct cEpgfixerSetup
 {
-public:
   int quotedshorttext;
   int blankbeforedescription;
   int repeatedtitle;
@@ -24,12 +21,6 @@ public:
   int components;
   int striphtml;
   cEpgfixerSetup();
-  bool SetupParse(const char *Name, const char *Value);
-  bool ProcessArgs(int argc, char *argv[]);
-
-protected:
-  bool ProcessArg(const char *Name, const char *Value);
-  static cString m_ProcessedArgs;
 };
 
 // Global instance

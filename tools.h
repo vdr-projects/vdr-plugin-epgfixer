@@ -13,9 +13,22 @@
 #include <vdr/epg.h>
 #include <vdr/tools.h>
 
-#define error(x...) esyslog("EPGFixer: " x);
+#ifdef DEBUG
+#define debug(x...) dsyslog("EPGFixer: " x);
+#else
+#define debug(x...) ;
+#endif
+#define error(x...) esyslog("ERROR: " x);
+
 
 #define FREE(x) { free(x); x = NULL; }
+
+// --- EPG bug fixes ----------------------------------------------------
+
+void FixOriginalEpgBugs(cEvent *event);
+bool FixCharSets(cEvent *Event);
+bool FixBugs(cEvent *Event);
+void StripHTML(cEvent *Event);
 
 // --- Add event to schedule --------------------------------------------
 

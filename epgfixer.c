@@ -145,7 +145,29 @@ cMenuSetupPage *cPluginEpgfixer::SetupMenu(void)
 bool cPluginEpgfixer::SetupParse(const char *Name, const char *Value)
 {
   // Parse your own setup parameters and store their values.
-  return EpgfixerSetup.SetupParse(Name, Value);
+  cString m_ProcessedArgs;
+  // Parse your own setup parameters and store their values.
+  const char *pt;
+  if (*m_ProcessedArgs && NULL != (pt = strstr(m_ProcessedArgs + 1, Name)) &&
+      *(pt - 1) == ' ' && *(pt + strlen(Name)) == ' ') {
+     dsyslog("Skipping configuration entry %s=%s (overridden in command line)", Name, Value);
+     return true;
+     }
+
+  if (!strcasecmp(Name, "RemoveQuotesFromShortText"))                EpgfixerSetup.quotedshorttext = atoi(Value);
+  else if (!strcasecmp(Name, "MoveDescriptionFromShortText"))        EpgfixerSetup.blankbeforedescription = atoi(Value);
+  else if (!strcasecmp(Name, "RemoveRepeatedTitleFromShortText"))    EpgfixerSetup.repeatedtitle = atoi(Value);
+  else if (!strcasecmp(Name, "RemoveDoubleQuotesFromShortText"))     EpgfixerSetup.doublequotedshorttext = atoi(Value);
+  else if (!strcasecmp(Name, "RemoveUselessFormatting"))             EpgfixerSetup.removeformatting = atoi(Value);
+  else if (!strcasecmp(Name, "MoveLongShortTextToDescription"))      EpgfixerSetup.longshorttext = atoi(Value);
+  else if (!strcasecmp(Name, "PreventEqualShortTextAndDescription")) EpgfixerSetup.equalshorttextanddescription = atoi(Value);
+  else if (!strcasecmp(Name, "ReplaceBackticksWithSingleQuotes"))    EpgfixerSetup.nobackticks = atoi(Value);
+  else if (!strcasecmp(Name, "FixStreamComponentDescriptions"))      EpgfixerSetup.components = atoi(Value);
+  else if (!strcasecmp(Name, "StripHTMLEntities"))                   EpgfixerSetup.striphtml = atoi(Value);
+  else
+     return false;
+
+  return true;
 }
 
 bool cPluginEpgfixer::Service(const char *Id, void *Data)
