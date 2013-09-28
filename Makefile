@@ -19,6 +19,7 @@ GITTAG  = $(shell git describe --always 2>/dev/null)
 
 # Use package data if installed...otherwise assume we're under the VDR source directory:
 PKGCFG = $(if $(VDRDIR),$(shell pkg-config --variable=$(1) $(VDRDIR)/vdr.pc),$(shell pkg-config --variable=$(1) vdr || pkg-config --variable=$(1) ../../../vdr.pc))
+CFGDIR = $(call PKGCFG,configdir)
 LIBDIR = $(call PKGCFG,libdir)
 LOCDIR = $(call PKGCFG,locdir)
 PLGCFG = $(call PKGCFG,plgcfg)
@@ -70,7 +71,7 @@ OBJS = $(PLUGIN).o blacklist.o charset.o config.o epgclone.o epghandler.o regexp
 
 ifeq ($(REGEXLIB), pcre)
 LIBS += $(shell pcre-config --libs-posix)
-INCLUDE += $(shell pcre-config --cflags)
+INCLUDES += $(shell pcre-config --cflags)
 DEFINES += -DHAVE_PCREPOSIX
 endif
 
@@ -126,7 +127,11 @@ $(SOFILE): $(OBJS)
 install-lib: $(SOFILE)
 	install -D $^ $(DESTDIR)$(LIBDIR)/$^.$(APIVERSION)
 
-install: install-lib install-i18n
+install-conf:
+	@mkdir -p $(DESTDIR)$(CFGDIR)/plugins/$(PLUGIN)
+	@cp -pn $(PLUGIN)/* $(DESTDIR)$(CFGDIR)/plugins/$(PLUGIN)/
+
+install: install-lib install-i18n install-conf
 
 dist: $(I18Npo) clean
 	@-rm -rf $(TMPDIR)/$(ARCHIVE)

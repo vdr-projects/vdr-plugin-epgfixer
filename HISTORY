@@ -1,6 +1,16 @@
 VDR Plugin 'epgfixer' Revision History
 --------------------------------------
 
+2013-xx-xx: Version x.x.x
+
+- Makefile fixes. Install example config files automatically.
+- Fix crash in config editing menus if using color buttons when config is empty.
+- Fix SVDRP command REL (thanks to Ville Skyttä).
+- Fix LoadConfigFile() return value on success (thanks to Ville Skyttä).
+- Support for new Makefile of VDR >= 1.7.34.
+- Report an error if PCRE library is not available.
+- Fix replacing at the end of string when using s///. Fix variable name clash.
+
 2012-11-28: Version 0.3.1
 
 - Fix memory leak.
