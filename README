@@ -39,9 +39,8 @@ cd /put/your/path/here/VDR/PLUGINS/src
 tar -xzf /put/your/path/here/vdr-epgfixer-X.Y.Z.tgz
 ln -s epgfixer-X.Y.Z epgfixer
 cd /put/your/path/here/VDR
-cp -R PLUGINS/src/epgfixer/epgfixer /path/to/vdrconf/plugins/
 make
-make plugins
+make install
 ./vdr -P epgfixer
 
 Configuration:

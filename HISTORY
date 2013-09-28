@@ -3,6 +3,7 @@ VDR Plugin 'epgfixer' Revision History
 
 2013-xx-xx: Version x.x.x
 
+- Fix possible null pointer error.
 - Fix header includes.
 - Makefile fixes. Install example config files automatically.
 - Fix crash in config editing menus if using color buttons when config is empty.
