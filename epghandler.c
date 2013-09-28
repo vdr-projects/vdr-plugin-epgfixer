@@ -5,14 +5,14 @@
  *
  */
 
+#include <string.h>
+#include <vdr/tools.h>
 #include "epghandler.h"
 #include "blacklist.h"
 #include "charset.h"
 #include "config.h"
 #include "epgclone.h"
 #include "regexp.h"
-#include <vdr/tools.h>
-#include <string.h>
 
 //
 // Original VDR bug fixes adapted from epg.c of VDR

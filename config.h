@@ -8,7 +8,7 @@
 #ifndef __EPGFIXER_CONFIG_H_
 #define __EPGFIXER_CONFIG_H_
 
-#include "regexp.h"
+#include <vdr/tools.h>
 
 class cEpgfixerSetup
 {

@@ -8,8 +8,8 @@
 #ifndef __EPGFIXER_SETUP_MENU_H
 #define __EPGFIXER_SETUP_MENU_H
 
-#include <vdr/menu.h>
 #include <vdr/menuitems.h>
+#include <vdr/tools.h>
 #include "config.h"
 
 class cMenuSetupEpgfixer : public cMenuSetupPage

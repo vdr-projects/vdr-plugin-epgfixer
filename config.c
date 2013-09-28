@@ -5,8 +5,9 @@
  *
  */
 
-#include "config.h"
+#include <stdlib.h>
 #include <string.h>
+#include "config.h"
 
 /* Global instance */
 cEpgfixerSetup EpgfixerSetup;

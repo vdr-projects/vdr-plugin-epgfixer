@@ -5,6 +5,8 @@
  *
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include "epgclone.h"
 
 /* Global instance */

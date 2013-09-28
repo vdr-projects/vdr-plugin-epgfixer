@@ -8,10 +8,10 @@
 #ifndef __EPGFIXER_TOOLS_H_
 #define __EPGFIXER_TOOLS_H_
 
+#include <stdio.h>
+#include <unistd.h>
 #include <vdr/epg.h>
 #include <vdr/tools.h>
-#include <unistd.h>
-#include <stdio.h>
 
 #define error(x...) esyslog("EPGFixer: " x);
 

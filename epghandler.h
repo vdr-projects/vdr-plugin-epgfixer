@@ -8,6 +8,7 @@
 #ifndef __EPGFIXER_EPGHANDLER_H
 #define __EPGFIXER_EPGHANDLER_H
 
+#include <vdr/channels.h>
 #include <vdr/epg.h>
 
 class cEpgfixerEpgHandler : public cEpgHandler

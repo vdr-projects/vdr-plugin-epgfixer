@@ -5,6 +5,8 @@
  *
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include "regexp.h"
 
 // for PCRE without JIT support

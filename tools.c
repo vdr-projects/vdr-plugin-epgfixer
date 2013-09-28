@@ -5,8 +5,11 @@
  *
  */
 
-#include "tools.h"
+#include <stdlib.h>
+#include <string.h>
 #include <vdr/thread.h>
+
+#include "tools.h"
 
 //
 // HTML conversion code taken from RSS Reader plugin for VDR

@@ -8,8 +8,9 @@
 #ifndef __EPGFIXER_EPGCLONE_H_
 #define __EPGFIXER_EPGCLONE_H_
 
-#include "tools.h"
 #include <vdr/epg.h>
+#include <vdr/tools.h>
+#include "tools.h"
 
 class cEpgClone : public cListItem
 {

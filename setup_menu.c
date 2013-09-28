@@ -5,14 +5,18 @@
  *
  */
 
-#include "setup_menu.h"
+#include <stdio.h>
 #include <vdr/config.h>
+#include <vdr/eit.h>
 #include <vdr/i18n.h>
+#include <vdr/menu.h>
+#include <vdr/skins.h>
 #include "blacklist.h"
 #include "charset.h"
 #include "epgclone.h"
 #include "regexp.h"
 #include "tools.h"
+#include "setup_menu.h"
 
 //--- cMenuSetupConfigEditor ------------------------------------------------------
 

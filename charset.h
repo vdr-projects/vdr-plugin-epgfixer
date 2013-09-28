@@ -8,8 +8,9 @@
 #ifndef __EPGFIXER_CHARSET_H_
 #define __EPGFIXER_CHARSET_H_
 
-#include "tools.h"
 #include <vdr/epg.h>
+#include <vdr/tools.h>
+#include "tools.h"
 
 class cCharSet : public cListItem
 {

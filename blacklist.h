@@ -8,8 +8,10 @@
 #ifndef __EPGFIXER_BLACKLIST_H_
 #define __EPGFIXER_BLACKLIST_H_
 
+#include <vdr/channels.h>
+#include <vdr/tools.h>
+
 #include "tools.h"
-#include <vdr/epg.h>
 
 class cBlacklist : public cListItem
 {

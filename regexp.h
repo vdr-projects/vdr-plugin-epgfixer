@@ -8,12 +8,13 @@
 #ifndef __EPGFIXER_REGEXP_H_
 #define __EPGFIXER_REGEXP_H_
 
-#include "tools.h"
-#include <vdr/epg.h>
-
 #ifdef HAVE_PCREPOSIX
 #include <pcre.h>
 #endif
+
+#include <vdr/epg.h>
+#include <vdr/tools.h>
+#include "tools.h"
 
 typedef enum { REGEXP_TITLE, REGEXP_SHORTTEXT, REGEXP_DESCRIPTION, REGEXP_UNDEFINED } sources;
 

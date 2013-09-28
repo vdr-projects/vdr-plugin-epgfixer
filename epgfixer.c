@@ -5,14 +5,16 @@
  *
  */
 
+#include <getopt.h>
+#include <stdlib.h>
 #include <vdr/plugin.h>
 #include <vdr/i18n.h>
 #include "blacklist.h"
 #include "charset.h"
 #include "epgclone.h"
+#include "epghandler.h"
 #include "regexp.h"
 #include "setup_menu.h"
-#include "epghandler.h"
 
 #if defined(APIVERSNUM) && APIVERSNUM < 10726
 #error "VDR-1.7.26 API version or greater is required!"
