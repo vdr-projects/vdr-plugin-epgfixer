@@ -3,6 +3,8 @@ VDR Plugin 'epgfixer' Revision History
 
 2013-xx-xx: Version x.x.x
 
+- Support regular expressions which are used only if the content of another EPG
+  field matches to an additional regular expression.
 - Fix possible null pointer error.
 - Fix header includes.
 - Makefile fixes. Install example config files automatically.

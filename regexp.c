@@ -28,18 +28,24 @@ const char *strBackrefs[] = { "atitle", "ptitle", "title", "ashorttext", "pshort
 
 cRegexp::cRegexp()
 {
+  cmodifiers = 0;
   modifiers = 0;
+  cregexp = NULL;
   regexp = NULL;
   replace = NONE;
   replacement = NULL;
+  csource = REGEXP_UNDEFINED;
   source = REGEXP_UNDEFINED;
+  cre = NULL;
   re = NULL;
+  csd = NULL;
   sd = NULL;
 }
 
 cRegexp::~cRegexp(void)
 {
   Free();
+  free(cregexp);
   free(regexp);
   free(replacement);
   FreeCompiled();
@@ -57,8 +63,23 @@ void cRegexp::Compile()
      }
   else {
      sd = pcre_study(re, PCRE_STUDY_JIT_COMPILE, (const char **)&error);
-     if (error)
+     if (error) {
         error("PCRE study error: %s", error);
+        }
+     else {
+        if (cregexp) {
+           cre = pcre_compile(cregexp, cmodifiers, &error, &erroffset, NULL);
+           if (error) {
+              error("PCRE compile error: %s at offset %i", error, erroffset);
+              enabled = false;
+              }
+           else {
+              csd = pcre_study(cre, PCRE_STUDY_JIT_COMPILE, (const char **)&error);
+              if (error)
+                 error("PCRE study error: %s", error);
+              }
+           }
+        }
      }
 }
 
@@ -68,6 +89,10 @@ void cRegexp::FreeCompiled()
      pcre_free(re);
      re = NULL;
      }
+  if (cre) {
+     pcre_free(cre);
+     cre = NULL;
+     }
   if (sd) {
 #ifdef PCRE_CONFIG_JIT
      pcre_free_study(sd);
@@ -75,6 +100,14 @@ void cRegexp::FreeCompiled()
      pcre_free(sd);
 #endif
      sd = NULL;
+     }
+  if (csd) {
+#ifdef PCRE_CONFIG_JIT
+     pcre_free_study(csd);
+#else
+     pcre_free(csd);
+#endif
+     csd = NULL;
      }
 }
 
@@ -154,12 +187,15 @@ void cRegexp::ParseRegexp(char *restring)
 
 void cRegexp::SetFromString(char *s, bool Enabled)
 {
+  cmodifiers = 0;
   modifiers = 0;
+  FREE(cregexp);
   FREE(regexp);
   replace = NONE;
   FREE(replacement);
   Free();
   FreeCompiled();
+  csource = REGEXP_UNDEFINED;
   source = REGEXP_UNDEFINED;
   cListItem::SetFromString(s, Enabled);
   if (enabled) {
@@ -175,6 +211,28 @@ void cRegexp::SetFromString(char *s, bool Enabled)
            *f = 0;
            field = f + 1;
            numchannels = LoadChannelsFromString(chanfield);
+           }
+        // parse field conditional
+        char *cond = strchr(field, '?');
+        if (cond) {
+           *cond = 0;
+           cond += 1;
+           char *m = strrchr(cond, '/');
+           if (m) {
+              *m = 0;
+              cmodifiers = ParseModifiers(m + 1);
+              }
+           char *cs = strchr(cond, '~');
+           if (cs) {
+              *cs = 0;
+              cregexp = strdup(cs + 3);
+              }
+           if (strcmp(cond, "title") == 0)
+              csource = REGEXP_TITLE;
+           if (strcmp(cond, "shorttext") == 0)
+              csource = REGEXP_SHORTTEXT;
+           if (strcmp(cond, "description") == 0)
+              csource = REGEXP_DESCRIPTION;
            }
         if (strcmp(field, "title") == 0)
            source = REGEXP_TITLE;
@@ -210,6 +268,24 @@ bool cRegexp::Apply(cEvent *Event)
      int tmpstringlen = strlen(*tmpstring);
      int ovector[OVECCOUNT];
      int rc = 0;
+     cString ctmpstring;
+     switch (csource) {
+       case REGEXP_TITLE:
+         ctmpstring = Event->Title();
+         break;
+       case REGEXP_SHORTTEXT:
+         ctmpstring = Event->ShortText();
+         break;
+       case REGEXP_DESCRIPTION:
+         ctmpstring = Event->Description();
+         break;
+       default:
+         ctmpstring = "";
+         break;
+       }
+     if (cre && ((rc = pcre_exec(cre, csd, *ctmpstring, strlen(*ctmpstring), 0, 0, ovector, OVECCOUNT)) != 1))
+        return false;
+
      if (replace != NONE) {// find and replace
         int last_match_end = -1;
         int options = 0;

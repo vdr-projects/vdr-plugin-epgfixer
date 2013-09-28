@@ -21,12 +21,17 @@ typedef enum { REGEXP_TITLE, REGEXP_SHORTTEXT, REGEXP_DESCRIPTION, REGEXP_UNDEFI
 class cRegexp : public cListItem
 {
 private:
+  char *cregexp;
   char *regexp;
   char *replacement;
   int replace;
+  int cmodifiers;
   int modifiers;
+  int csource;
   int source;
+  pcre *cre;
   pcre *re;
+  pcre_extra *csd;
   pcre_extra *sd;
   void Compile();
   void FreeCompiled();
