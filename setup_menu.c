@@ -82,6 +82,8 @@ protected:
   }
   void Set(void)
   {
+    int current = Current();
+
     Clear();
     int i = 0;
     LISTITEM *item = (LISTITEM *)list->First();
@@ -94,6 +96,8 @@ protected:
         SetHelp(trVDR("Button$On/Off"), trVDR("Button$New"), trVDR("Button$Delete"), tr("Button$Cancel"));
     else
         SetHelp(NULL,trVDR("Button$New"), NULL, tr("Button$Cancel"));
+
+    SetCurrent(Get(current));
     Display();
   }
 public:
@@ -173,6 +177,8 @@ cMenuSetupEpgfixer::cMenuSetupEpgfixer(void)
 
 void cMenuSetupEpgfixer::Set(void)
 {
+  int current = Current();
+
   Clear();
   help.Clear();
   Add(new cOsdItem(tr("Regular expressions"), osUser1));
@@ -218,6 +224,8 @@ void cMenuSetupEpgfixer::Set(void)
                             &newconfig.striphtml));
   help.Append(tr("Convert HTML entities from all fields to matching regular characters."));
   SetHelp(tr("Button$Load"),NULL,NULL, tr("Button$Clear EPG"));
+
+  SetCurrent(Get(current));
   Display();
 }
 

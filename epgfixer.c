@@ -146,7 +146,6 @@ bool cPluginEpgfixer::SetupParse(const char *Name, const char *Value)
 {
   // Parse your own setup parameters and store their values.
   cString m_ProcessedArgs;
-  // Parse your own setup parameters and store their values.
   const char *pt;
   if (*m_ProcessedArgs && NULL != (pt = strstr(m_ProcessedArgs + 1, Name)) &&
       *(pt - 1) == ' ' && *(pt + strlen(Name)) == ' ') {

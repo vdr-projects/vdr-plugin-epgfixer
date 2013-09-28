@@ -20,7 +20,6 @@
 #endif
 #define error(x...) esyslog("ERROR: " x);
 
-
 #define FREE(x) { free(x); x = NULL; }
 
 // --- EPG bug fixes ----------------------------------------------------

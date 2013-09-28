@@ -78,7 +78,6 @@ void cRegexp::FreeCompiled()
      }
 }
 
-
 int cRegexp::ParseModifiers(char *modstring, int substitution)
 {
   int i = 0;
