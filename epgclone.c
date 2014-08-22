@@ -51,7 +51,7 @@ void cEpgClone::CloneEvent(cEvent *Source, cEvent *Dest) {
   if (dest_num)
      channelID = Channels.GetByNumber(dest_num)->GetChannelID();
   else
-     channelID.FromString(dest_str);
+     channelID = tChannelID::FromString(dest_str);
   AddEvent(Dest, channelID);
 }
 

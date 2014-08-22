@@ -1,7 +1,7 @@
 VDR Plugin 'epgfixer' Revision History
 --------------------------------------
 
-2013-xx-xx: Version x.x.x
+2014-xx-xx: Version x.x.x
 
 - Support regular expressions which are used only if the content of another EPG
   field matches to an additional regular expression.
@@ -14,6 +14,7 @@ VDR Plugin 'epgfixer' Revision History
 - Support for new Makefile of VDR >= 1.7.34.
 - Report an error if PCRE library is not available.
 - Fix replacing at the end of string when using s///. Fix variable name clash.
+- Fix using channelIDs in EPG cloning (thanks to Guy Martin).
 
 2012-11-28: Version 0.3.1
 
