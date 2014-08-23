@@ -48,11 +48,22 @@ void cEpgClone::CloneEvent(cEvent *Source, cEvent *Dest) {
   if (Source->Seen())
      Dest->SetSeen();
   tChannelID channelID;
-  if (dest_num)
-     channelID = Channels.GetByNumber(dest_num)->GetChannelID();
+  if (dest_num) {
+     cChannel *dest_chan = Channels.GetByNumber(dest_num);
+     if (dest_chan)
+        channelID = Channels.GetByNumber(dest_num)->GetChannelID();
+     else
+        channelID = tChannelID::InvalidID;
+     }
   else
      channelID = tChannelID::FromString(dest_str);
-  AddEvent(Dest, channelID);
+  if (channelID == tChannelID::InvalidID) {
+     enabled = false;
+     delete Dest;
+     error("Destination channel %s not found for cloning, disabling cloning!", (dest_num ? *itoa(dest_num) : dest_str));
+     }
+  else
+     AddEvent(Dest, channelID);
 }
 
 bool cEpgClone::Apply(cEvent *Event)

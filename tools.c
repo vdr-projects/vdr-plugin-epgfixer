@@ -469,13 +469,20 @@ void cAddEventThread::Action(void)
         cSchedules *schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
         Lock();
         while (schedules && (e = list->First()) != NULL) {
-              cSchedule *schedule = (cSchedule *)schedules->GetSchedule(Channels.GetByChannelID(e->GetChannelID()), true);
-              if (schedule) {
-                 schedule->AddEvent(e->GetEvent());
-                 EpgHandlers.SortSchedule(schedule);
-                 EpgHandlers.DropOutdated(schedule, e->GetEvent()->StartTime(), e->GetEvent()->EndTime(), e->GetEvent()->TableID(), e->GetEvent()->Version());
-                 list->Del(e);
+              tChannelID chanid = e->GetChannelID();
+              cChannel *chan = Channels.GetByChannelID(chanid);
+              if (!chan) {
+                 error("Destination channel %s not found for cloning!", *chanid.ToString());
                  }
+              else {
+                 cSchedule *schedule = (cSchedule *)schedules->GetSchedule(chan, true);
+                 if (schedule) {
+                    schedule->AddEvent(e->GetEvent());
+                    EpgHandlers.SortSchedule(schedule);
+                    EpgHandlers.DropOutdated(schedule, e->GetEvent()->StartTime(), e->GetEvent()->EndTime(), e->GetEvent()->TableID(), e->GetEvent()->Version());
+                    }
+		 }
+              list->Del(e);
               }
         Unlock();
         cCondWait::SleepMs(10);
