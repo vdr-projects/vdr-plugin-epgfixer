@@ -481,7 +481,7 @@ void cAddEventThread::Action(void)
                     EpgHandlers.SortSchedule(schedule);
                     EpgHandlers.DropOutdated(schedule, e->GetEvent()->StartTime(), e->GetEvent()->EndTime(), e->GetEvent()->TableID(), e->GetEvent()->Version());
                     }
-		 }
+                 }
               list->Del(e);
               }
         Unlock();
