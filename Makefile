@@ -32,10 +32,10 @@ export CFLAGS   = $(call PKGCFG,cflags)
 export CXXFLAGS = $(call PKGCFG,cxxflags)
 
 ### Regexp
-ifeq (exists, $(shell pkg-config libpcre && echo exists))
-	REGEXLIB = pcre
+ifeq (exists, $(shell pkg-config libpcre2-posix && echo exists))
+	REGEXLIB = pcre2
 else
-$(error PCRE library required)
+$(error PCRE2 library required)
 endif
 
 ### The version number of VDR's plugin API:
@@ -69,10 +69,10 @@ endif
 
 OBJS = $(PLUGIN).o blacklist.o charset.o config.o epgclone.o epghandler.o regexp.o setup_menu.o tools.o
 
-ifeq ($(REGEXLIB), pcre)
-LIBS += $(shell pcre-config --libs-posix)
-INCLUDES += $(shell pcre-config --cflags)
-DEFINES += -DHAVE_PCREPOSIX
+ifeq ($(REGEXLIB), pcre2)
+LIBS += $(shell pcre2-config --libs-posix)
+INCLUDES += $(shell pcre2-config --cflags)
+DEFINES += -DHAVE_PCRE2POSIX
 endif
 
 ### The main target:

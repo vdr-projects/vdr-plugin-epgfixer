@@ -16,6 +16,7 @@ VDR Plugin 'epgfixer' Revision History
 - Support for new Makefile of VDR >= 1.7.34.
 - Report an error if PCRE library is not available.
 - Fix replacing at the end of string when using s///. Fix variable name clash.
+- Migrate to PCRE2
 
 2012-11-28: Version 0.3.1
 

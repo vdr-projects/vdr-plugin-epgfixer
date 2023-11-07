@@ -9,13 +9,6 @@
 #include <string.h>
 #include "regexp.h"
 
-// for PCRE without JIT support
-#ifndef PCRE_STUDY_JIT_COMPILE
-#define PCRE_STUDY_JIT_COMPILE 0
-#endif
-
-#define OVECCOUNT 33    /* should be a multiple of 3 */
-
 typedef enum { NONE,FIRST,GLOBAL } replace;
 
 /* Global instance */
@@ -38,8 +31,6 @@ cRegexp::cRegexp()
   source = REGEXP_UNDEFINED;
   cre = NULL;
   re = NULL;
-  csd = NULL;
-  sd = NULL;
 }
 
 cRegexp::~cRegexp(void)
@@ -54,30 +45,22 @@ cRegexp::~cRegexp(void)
 void cRegexp::Compile()
 {
   FreeCompiled();
-  const char *error;
-  int erroffset;
-  re = pcre_compile(regexp, modifiers, &error, &erroffset, NULL);
-  if (error) {
-     error("PCRE compile error: %s at offset %i", error, erroffset);
+  PCRE2_UCHAR error[256];
+  PCRE2_SIZE erroffset;
+  int errnumber;
+  re = pcre2_compile((PCRE2_SPTR8)regexp, PCRE2_ZERO_TERMINATED, modifiers, &errnumber, &erroffset, NULL);
+  if (!re) {
+     pcre2_get_error_message(errnumber, error, sizeof(error));
+     error("PCRE compile error: %s at offset %li", error, erroffset);
      enabled = false;
      }
   else {
-     sd = pcre_study(re, PCRE_STUDY_JIT_COMPILE, (const char **)&error);
-     if (error) {
-        error("PCRE study error: %s", error);
-        }
-     else {
-        if (cregexp) {
-           cre = pcre_compile(cregexp, cmodifiers, &error, &erroffset, NULL);
-           if (error) {
-              error("PCRE compile error: %s at offset %i", error, erroffset);
-              enabled = false;
-              }
-           else {
-              csd = pcre_study(cre, PCRE_STUDY_JIT_COMPILE, (const char **)&error);
-              if (error)
-                 error("PCRE study error: %s", error);
-              }
+     if (cregexp) {
+        cre = pcre2_compile((PCRE2_SPTR8)cregexp, PCRE2_ZERO_TERMINATED, cmodifiers, &errnumber, &erroffset, NULL);
+        if (!cre) {
+           pcre2_get_error_message(errnumber, error, sizeof(error));
+           error("PCRE compile error: %s at offset %li", error, erroffset);
+           enabled = false;
            }
         }
      }
@@ -86,28 +69,12 @@ void cRegexp::Compile()
 void cRegexp::FreeCompiled()
 {
   if (re) {
-     pcre_free(re);
+     pcre2_code_free(re);
      re = NULL;
      }
   if (cre) {
-     pcre_free(cre);
+     pcre2_code_free(cre);
      cre = NULL;
-     }
-  if (sd) {
-#ifdef PCRE_CONFIG_JIT
-     pcre_free_study(sd);
-#else
-     pcre_free(sd);
-#endif
-     sd = NULL;
-     }
-  if (csd) {
-#ifdef PCRE_CONFIG_JIT
-     pcre_free_study(csd);
-#else
-     pcre_free(csd);
-#endif
-     csd = NULL;
      }
 }
 
@@ -123,22 +90,19 @@ int cRegexp::ParseModifiers(char *modstring, int substitution)
               replace = GLOBAL;
            break;
          case 'i':
-           mods |= PCRE_CASELESS;
+           mods |= PCRE2_CASELESS;
            break;
          case 'm':
-           mods |= PCRE_MULTILINE;
+           mods |= PCRE2_MULTILINE;
            break;
          case 's':
-           mods |= PCRE_DOTALL;
+           mods |= PCRE2_DOTALL;
            break;
          case 'u':
-           mods |= PCRE_UTF8;
+           mods |= PCRE2_UTF;
            break;
          case 'x':
-           mods |= PCRE_EXTENDED;
-           break;
-         case 'X':
-           mods |= PCRE_EXTRA;
+           mods |= PCRE2_EXTENDED;
            break;
          default:
            break;
@@ -266,7 +230,7 @@ bool cRegexp::Apply(cEvent *Event)
      if (!*tmpstring)
         tmpstring = "";
      int tmpstringlen = strlen(*tmpstring);
-     int ovector[OVECCOUNT];
+     PCRE2_SIZE *ovector;
      int rc = 0;
      cString ctmpstring;
      switch (csource) {
@@ -283,28 +247,39 @@ bool cRegexp::Apply(cEvent *Event)
          ctmpstring = "";
          break;
        }
-     if (cre && ((rc = pcre_exec(cre, csd, *ctmpstring, strlen(*ctmpstring), 0, 0, ovector, OVECCOUNT)) != 1))
-        return false;
+     pcre2_match_data *match_data;
+     // is cre set and are there any matches?
+     if (cre) {
+        match_data = pcre2_match_data_create_from_pattern(cre, NULL);
+        rc = pcre2_match(cre, (PCRE2_SPTR8)*ctmpstring, strlen(*ctmpstring), 0, 0, match_data, NULL);
+        pcre2_match_data_free(match_data);
+        // pcre2_match returns (number of matches + 1) if there are matches
+        if (rc < 2)
+           return false;
+       }
 
      if (replace != NONE) {// find and replace
         int last_match_end = -1;
         int options = 0;
         int start_offset = 0;
         cString resultstring = "";
+        match_data = pcre2_match_data_create_from_pattern(re, NULL);
         // loop through matches
-        while ((rc = pcre_exec(re, sd, *tmpstring, tmpstringlen, start_offset, options, ovector, OVECCOUNT)) > 0) {
+        while ((rc = pcre2_match(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, start_offset, options, match_data, NULL)) > 1) {
+              ovector = pcre2_get_ovector_pointer(match_data);
               last_match_end = ovector[1];
-              resultstring = cString::sprintf("%s%.*s%s", *resultstring, ovector[0] - start_offset, &tmpstring[start_offset], replacement);
+              resultstring = cString::sprintf("%s%.*s%s", *resultstring, (int)(ovector[0] - start_offset), &tmpstring[start_offset], replacement);
               options = 0;
               if (ovector[0] == ovector[1]) {
-                 if (ovector[0] == tmpstringlen)
+                 if (ovector[0] == (PCRE2_SIZE)tmpstringlen)
                     break;
-                 options = PCRE_NOTEMPTY_ATSTART | PCRE_ANCHORED;
+                 options = PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED;
                  }
               if (replace == FIRST) // only first match wanted
                  break;
               start_offset = ovector[1];
               }
+        pcre2_match_data_free(match_data);
         // replace EPG field if regexp matched
         if (last_match_end > 0 && (last_match_end <= tmpstringlen)) {
            resultstring = cString::sprintf("%s%s", *resultstring, tmpstring + last_match_end);
@@ -325,17 +300,22 @@ bool cRegexp::Apply(cEvent *Event)
            }
         }
      else {// use backreferences
-        const char *capturestring;
-        rc = pcre_exec(re, sd, *tmpstring, tmpstringlen, 0, 0, ovector, OVECCOUNT);
+        PCRE2_UCHAR8 *capturestring;
+        PCRE2_SIZE capturelen;
+        match_data = pcre2_match_data_create_from_pattern(re, NULL);
+        rc = pcre2_match(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, 0, 0, match_data, NULL);
+        pcre2_match_data_free(match_data);
         if (rc == 0) {
-           error("maximum number of captured substrings is %d\n", OVECCOUNT / 3 - 1);
+           error("maximum number of captured substrings has been exceeded\n");
            }
-        else if (rc > 0) {
+        else if (rc > 1) {
            int i = 0;
            // loop through all possible backreferences
            // TODO allow duplicate backreference names?
+           match_data = pcre2_match_data_create_from_pattern(re, NULL);
+           pcre2_match(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, 0, 0, match_data, NULL);
            while (i < 10) {
-             if (pcre_get_named_substring(re, tmpstring, ovector, rc, strBackrefs[i], &capturestring) != PCRE_ERROR_NOSUBSTRING) {
+             if (pcre2_substring_get_byname(match_data, (PCRE2_SPTR8)strBackrefs[i], &capturestring, &capturelen) != PCRE2_ERROR_NOSUBSTRING) {
                 switch (i) {
                   case ATITLE:
                   case PTITLE:
@@ -347,7 +327,7 @@ bool cRegexp::Apply(cEvent *Event)
                        break;
                        }
                   case TITLE:
-                    Event->SetTitle(capturestring);
+                    Event->SetTitle((const char *)capturestring);
                     break;
                   case ASHORTTEXT:
                   case PSHORTTEXT:
@@ -359,7 +339,7 @@ bool cRegexp::Apply(cEvent *Event)
                        break;
                        }
                   case SHORTTEXT:
-                    Event->SetShortText(capturestring);
+                    Event->SetShortText((const char *)capturestring);
                     break;
                   case ADESCRIPTION:
                   case PDESCRIPTION:
@@ -371,18 +351,19 @@ bool cRegexp::Apply(cEvent *Event)
                        break;
                        }
                   case DESCRIPTION:
-                    Event->SetDescription(capturestring);
+                    Event->SetDescription((const char *)capturestring);
                     break;
                   case RATING:
-                    Event->SetParentalRating(atoi(capturestring));
+                    Event->SetParentalRating(atoi((const char *)capturestring));
                     break;
                   default:
                     break;
                   }
-                pcre_free_substring(capturestring);
+                pcre2_substring_free(capturestring);
                 }
               ++i;
               }
+           pcre2_match_data_free(match_data);
            return true;
            }
         }
