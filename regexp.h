@@ -8,8 +8,9 @@
 #ifndef __EPGFIXER_REGEXP_H_
 #define __EPGFIXER_REGEXP_H_
 
-#ifdef HAVE_PCREPOSIX
-#include <pcre.h>
+#ifdef HAVE_PCRE2POSIX
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 #endif
 
 #include <vdr/epg.h>
@@ -29,10 +30,8 @@ private:
   int modifiers;
   int csource;
   int source;
-  pcre *cre;
-  pcre *re;
-  pcre_extra *csd;
-  pcre_extra *sd;
+  pcre2_code *cre;
+  pcre2_code *re;
   void Compile();
   void FreeCompiled();
   int ParseModifiers(char *modstring, int substitution = 0);

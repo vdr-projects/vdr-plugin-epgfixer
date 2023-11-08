@@ -12,7 +12,7 @@ See the file COPYING for more information.
 
 Requirements:
  - VDR 1.7.26 or later
- - PCRE library
+ - PCRE2 library
 
 Description:
 
