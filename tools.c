@@ -87,15 +87,7 @@ void FixOriginalEpgBugs(cEvent *event)
         }
      }
 
-  // Sometimes they repeat the Title in the ShortText:
-  //
-  // Title
-  // Title
-  //
-  if (EpgfixerSetup.repeatedtitle && shortText && strcmp(title, shortText) == 0) {
-     free(shortText);
-     shortText = NULL;
-     }
+  // Repeated title check moved to after compactspace - see below
 
   // Some channels put the ShortText between double quotes, which is nothing
   // but annoying (some even put a '.' after the closing '"'):
@@ -121,6 +113,34 @@ void FixOriginalEpgBugs(cEvent *event)
      title = compactspace(title);
      shortText = compactspace(shortText);
      description = compactspace(description);
+     }
+
+  // Sometimes they repeat the Title in the ShortText:
+  // This check runs AFTER compactspace to ensure clean comparison
+  if (EpgfixerSetup.repeatedtitle && title && shortText) {
+     int titleLen = strlen(title);
+     // Check if shortText starts with title (case-insensitive)
+     if (strncasecmp(title, shortText, titleLen) == 0) {
+        char *afterTitle = shortText + titleLen;
+        // Only match if title is followed by end-of-string or whitespace
+        if (*afterTitle == '\0' || *afterTitle == ' ' || *afterTitle == '\t' || *afterTitle == '\n' || *afterTitle == '\r') {
+           char *remainder = afterTitle;
+           // Skip any whitespace after the title
+           while (*remainder && (*remainder == ' ' || *remainder == '\t' || *remainder == '\n' || *remainder == '\r'))
+              remainder++;
+
+           // If there's remaining text, keep it; otherwise remove shortText entirely
+           if (*remainder) {
+              char *newShortText = strdup(remainder);
+              free(shortText);
+              shortText = newShortText;
+              }
+           else {
+              free(shortText);
+              shortText = NULL;
+              }
+           }
+        }
      }
 
 #define MAX_USEFUL_EPISODE_LENGTH 40
@@ -260,13 +280,13 @@ void StripHTML(cEvent *Event)
   if (EpgfixerSetup.striphtml) {
      char *tmpstring = NULL;
      tmpstring = Event->Title() ? strdup(Event->Title()) : NULL;
-     Event->SetTitle(striphtml(tmpstring));
+     Event->SetTitle(compactspace(striphtml(tmpstring)));
      FREE(tmpstring);
      tmpstring = Event->ShortText() ? strdup(Event->ShortText()) : NULL;
-     Event->SetShortText(striphtml(tmpstring));
+     Event->SetShortText(compactspace(striphtml(tmpstring)));
      FREE(tmpstring);
      tmpstring = Event->Description() ? strdup(Event->Description()) : NULL;
-     Event->SetDescription(striphtml(tmpstring));
+     Event->SetDescription(compactspace(striphtml(tmpstring)));
      FREE(tmpstring);
      }
 }
@@ -312,8 +332,8 @@ static struct conv_table post_conv_table[] =
   {"&#62;",    "\x3e"},
   {"&#91;",    "\x5b"},
   {"&#93;",    "\x5d"},
-  {"&nbsp;",   "\xc2\xa0"},
-  {"&#160;",   "\xc2\xa0"},
+  {"&nbsp;",   "\x20"},
+  {"&#160;",   "\x20"},
   {"&deg;",    "\xc2\xb0"},
   {"&#176;",   "\xc2\xb0"},
   {"&acute;",  "\xc2\xb4"},

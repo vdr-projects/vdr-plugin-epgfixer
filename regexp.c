@@ -260,51 +260,50 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
         match_data = pcre2_match_data_create_from_pattern(cre, NULL);
         rc = pcre2_match(cre, (PCRE2_SPTR8)*ctmpstring, strlen(*ctmpstring), 0, 0, match_data, NULL);
         pcre2_match_data_free(match_data);
-        // pcre2_match returns (number of matches + 1) if there are matches
-        if (rc < 2)
+        // pcre2_match returns (number of capture groups + 1) if there are matches
+        if (rc < 1) {
            return false;
+        }
        }
 
      if (replace != NONE) {// find and replace
-        int last_match_end = -1;
-        int options = 0;
-        int start_offset = 0;
-        cString resultstring = "";
-        match_data = pcre2_match_data_create_from_pattern(re, NULL);
-        // loop through matches
-        while ((rc = pcre2_match(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, start_offset, options, match_data, NULL)) > 0) {
-              ovector = pcre2_get_ovector_pointer(match_data);
-              last_match_end = ovector[1];
-              resultstring = cString::sprintf("%s%.*s%s", *resultstring, (int)(ovector[0] - start_offset), &tmpstring[start_offset], replacement);
-              options = 0;
-              if (ovector[0] == ovector[1]) {
-                 if (ovector[0] == (PCRE2_SIZE)tmpstringlen)
-                    break;
-                 options = PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED;
-                 }
-              if (replace == FIRST) // only first match wanted
-                 break;
-              start_offset = ovector[1];
-              }
-        pcre2_match_data_free(match_data);
-        // replace EPG field if regexp matched
-        if (last_match_end > 0 && (last_match_end <= tmpstringlen)) {
-           resultstring = cString::sprintf("%s%s", *resultstring, tmpstring + last_match_end);
+        PCRE2_SIZE outlengthused;
+        PCRE2_SIZE outbuffsize = tmpstringlen * 2 + 256;
+        PCRE2_UCHAR8 *outbuff = (PCRE2_UCHAR8 *)malloc(outbuffsize);
+
+        uint32_t options = PCRE2_SUBSTITUTE_EXTENDED | ((replace == GLOBAL) ? PCRE2_SUBSTITUTE_GLOBAL : 0);
+
+        rc = pcre2_substitute(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, 0, options,
+                             NULL, NULL, (PCRE2_SPTR8)replacement, PCRE2_ZERO_TERMINATED,
+                             outbuff, &outbuffsize);
+
+        if (rc == PCRE2_ERROR_NOMEMORY) {
+           // Buffer too small, reallocate with the size needed
+           free(outbuff);
+           outbuff = (PCRE2_UCHAR8 *)malloc(outbuffsize);
+           rc = pcre2_substitute(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, 0, options,
+                                NULL, NULL, (PCRE2_SPTR8)replacement, PCRE2_ZERO_TERMINATED,
+                                outbuff, &outbuffsize);
+           }
+
+        if (rc >= 0) {
            switch (source) {
              case REGEXP_TITLE:
-               Event->SetTitle(resultstring);
+               Event->SetTitle((const char *)outbuff);
                break;
              case REGEXP_SHORTTEXT:
-               Event->SetShortText(resultstring);
+               Event->SetShortText((const char *)outbuff);
                break;
              case REGEXP_DESCRIPTION:
-               Event->SetDescription(resultstring);
+               Event->SetDescription((const char *)outbuff);
                break;
              default:
                break;
              }
+           free(outbuff);
            return true;
            }
+        free(outbuff);
         }
      else {// use backreferences
         PCRE2_UCHAR8 *capturestring;
