@@ -133,12 +133,13 @@ void cRegexp::ParseRegexp(char *restring)
                  if (*(p - 1) != '\\') {
                     *p = 0;
                     regexp = strdup(&restring[2]);
-                    if (*(p + 1) != '/') // 
+                    if (*(p + 1) != '/') //
                        replacement = strdup(p + 1);
                     else
                        replacement = strdup("");
                     break;
                     }
+                 p++; // advance past escaped slash to avoid infinite loop
                  }
            }
         else if (restring[0] == 'm') // parse regexp format 'm//'
