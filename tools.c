@@ -245,14 +245,14 @@ void FixOriginalEpgBugs(cEvent *event)
   free(description);
 }
 
-bool FixBugs(cEvent *Event)
+bool FixBugs(cEvent *Event, tChannelID ChannelID)
 {
-  return EpgfixerRegexps.Apply(Event);
+  return EpgfixerRegexps.Apply(Event, ChannelID);
 }
 
-bool FixCharSets(cEvent *Event)
+bool FixCharSets(cEvent *Event, tChannelID ChannelID)
 {
-  return EpgfixerCharSets.Apply(Event);
+  return EpgfixerCharSets.Apply(Event, ChannelID);
 }
 
 void StripHTML(cEvent *Event)

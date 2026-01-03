@@ -41,7 +41,7 @@ public:
   cRegexp();
   virtual ~cRegexp();
   using cListItem::Apply;
-  virtual bool Apply(cEvent *Event);
+  virtual bool Apply(cEvent *Event, tChannelID ChannelID = tChannelID());
   void SetFromString(char *string, bool Enabled);
   int GetSource() { return source; };
   void ToggleEnabled(void);

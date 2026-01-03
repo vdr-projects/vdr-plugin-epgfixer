@@ -23,9 +23,15 @@ cCharSet::~cCharSet(void)
   free(realcharset);
 }
 
-bool cCharSet::Apply(cEvent *Event)
+bool cCharSet::Apply(cEvent *Event, tChannelID ChannelID)
 {
-  if (enabled && IsActive(Event->ChannelID())) {
+  // Use provided ChannelID if Event->ChannelID() is invalid
+  tChannelID eventChannelID = Event ? Event->ChannelID() : tChannelID();
+  if (!eventChannelID.Valid() && ChannelID.Valid()) {
+     eventChannelID = ChannelID;
+     }
+
+  if (enabled && IsActive(eventChannelID)) {
      cCharSetConv backconv(cCharSetConv::SystemCharacterTable(), origcharset ? origcharset : "iso6937");
      cString title(backconv.Convert(Event->Title()));
      cString shortText(backconv.Convert(Event->ShortText()));

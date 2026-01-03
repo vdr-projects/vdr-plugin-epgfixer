@@ -73,9 +73,15 @@ void cEpgClone::CloneEvent(cEvent *Source, cEvent *Dest) {
      AddEvent(Dest, channelID);
 }
 
-bool cEpgClone::Apply(cEvent *Event)
+bool cEpgClone::Apply(cEvent *Event, tChannelID ChannelID)
 {
-  if (Event && enabled && IsActive(Event->ChannelID())) {
+  // Use provided ChannelID if Event->ChannelID() is invalid
+  tChannelID eventChannelID = Event ? Event->ChannelID() : tChannelID();
+  if (!eventChannelID.Valid() && ChannelID.Valid()) {
+     eventChannelID = ChannelID;
+     }
+
+  if (Event && enabled && IsActive(eventChannelID)) {
      cEvent *event = new cEvent(Event->EventID());
      CloneEvent(Event, event);
      return true;

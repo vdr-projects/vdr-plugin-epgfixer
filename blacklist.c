@@ -10,8 +10,9 @@
 /* Global instance */
 cEpgfixerList<cBlacklist, cChannel> EpgfixerBlacklists;
 
-bool cBlacklist::Apply(cChannel *Channel)
+bool cBlacklist::Apply(cChannel *Channel, tChannelID ChannelID)
 {
+  // ChannelID parameter unused for cChannel, but kept for consistent interface
   if (enabled && IsActive(Channel->GetChannelID()))
      return true;
   return false;
