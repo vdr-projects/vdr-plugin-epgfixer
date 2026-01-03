@@ -245,9 +245,20 @@ void FixOriginalEpgBugs(cEvent *event)
   free(description);
 }
 
-bool FixBugs(cEvent *Event)
+bool FixBugs(cEvent *Event, tChannelID ChannelID)
 {
-  return EpgfixerRegexps.Apply(Event);
+  // Apply regexps manually to pass ChannelID parameter
+  int res = false;
+  cRegexp *item = (cRegexp *)(EpgfixerRegexps.First());
+  while (item) {
+        if (item->IsEnabled()) {
+           int ret = item->Apply(Event, ChannelID);
+           if (ret && !res)
+              res = true;
+           }
+        item = (cRegexp *)(item->Next());
+        }
+  return res;
 }
 
 bool FixCharSets(cEvent *Event)

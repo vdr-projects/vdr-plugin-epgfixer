@@ -210,9 +210,15 @@ void cRegexp::SetFromString(char *s, bool Enabled)
      }
 }
 
-bool cRegexp::Apply(cEvent *Event)
+bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
 {
-  if (enabled && re && IsActive(Event->ChannelID())) {
+  // Use provided ChannelID if Event->ChannelID() is invalid
+  tChannelID eventChannelID = Event ? Event->ChannelID() : tChannelID();
+  if (!eventChannelID.Valid() && ChannelID.Valid()) {
+     eventChannelID = ChannelID;
+     }
+
+  if (enabled && re && Event && IsActive(eventChannelID)) {
      cString tmpstring;
      switch (source) {
        case REGEXP_TITLE:

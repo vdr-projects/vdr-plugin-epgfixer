@@ -26,7 +26,7 @@
 
 void FixOriginalEpgBugs(cEvent *event);
 bool FixCharSets(cEvent *Event);
-bool FixBugs(cEvent *Event);
+bool FixBugs(cEvent *Event, tChannelID ChannelID = tChannelID());
 void StripHTML(cEvent *Event);
 
 // --- Add event to schedule --------------------------------------------
