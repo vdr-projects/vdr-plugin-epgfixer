@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "regexp.h"
 
 typedef enum { NONE,FIRST,GLOBAL } replace;
@@ -215,10 +216,13 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
   // Use provided ChannelID if Event->ChannelID() is invalid
   tChannelID eventChannelID = Event ? Event->ChannelID() : tChannelID();
   if (!eventChannelID.Valid() && ChannelID.Valid()) {
+     DEBUG_REGEXP("Apply() - Using fallback ChannelID='%s' (Event ChannelID was invalid)", *ChannelID.ToString());
      eventChannelID = ChannelID;
      }
 
   if (enabled && re && Event && IsActive(eventChannelID)) {
+     DEBUG_REGEXP("Apply() - Processing Event='%s', Pattern='%s'",
+                  Event->Title(), regexp ? regexp : "NULL");
      cString tmpstring;
      switch (source) {
        case REGEXP_TITLE:
@@ -267,6 +271,8 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
        }
 
      if (replace != NONE) {// find and replace
+        DEBUG_REGEXP("Apply() - Substitution mode, input='%s', replacement='%s'",
+                     *tmpstring, replacement);
         PCRE2_SIZE outlengthused;
         PCRE2_SIZE outbuffsize = tmpstringlen * 2 + 256;
         PCRE2_UCHAR8 *outbuff = (PCRE2_UCHAR8 *)malloc(outbuffsize);
@@ -287,6 +293,9 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
            }
 
         if (rc >= 0) {
+           // Null-terminate the output buffer (pcre2_substitute doesn't do this)
+           outbuff[outbuffsize] = '\0';
+           DEBUG_REGEXP("Apply() - Substitution SUCCESS, output='%s'", (const char *)outbuff);
            switch (source) {
              case REGEXP_TITLE:
                Event->SetTitle((const char *)outbuff);
@@ -303,9 +312,13 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
            free(outbuff);
            return true;
            }
+        else {
+           DEBUG_REGEXP("Apply() - Substitution FAILED, rc=%d", rc);
+           }
         free(outbuff);
         }
      else {// use backreferences
+        DEBUG_REGEXP("Apply() - Backreference mode");
         PCRE2_UCHAR8 *capturestring;
         PCRE2_SIZE capturelen;
         match_data = pcre2_match_data_create_from_pattern(re, NULL);
@@ -315,6 +328,7 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
            error("maximum number of captured substrings has been exceeded\n");
            }
         else if (rc > 1) {
+           DEBUG_REGEXP("Apply() - Backreference matched, %d groups", rc);
            int i = 0;
            // loop through all possible backreferences
            // TODO allow duplicate backreference names?

@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include "charset.h"
+#include "config.h"
 
 /* Global instance */
 cEpgfixerList<cCharSet, cEvent> EpgfixerCharSets;
@@ -32,6 +33,12 @@ bool cCharSet::Apply(cEvent *Event, tChannelID ChannelID)
      }
 
   if (enabled && IsActive(eventChannelID)) {
+     DEBUG_CHARSET("Apply() - Event='%s', Channel='%s'",
+                   Event->Title(), *eventChannelID.ToString());
+     DEBUG_CHARSET("Apply() - Conversion: %s -> %s",
+                   origcharset ? origcharset : "iso6937",
+                   realcharset ? realcharset : "system");
+     DEBUG_CHARSET("Apply() - Before: Title='%s'", Event->Title());
      cCharSetConv backconv(cCharSetConv::SystemCharacterTable(), origcharset ? origcharset : "iso6937");
      cString title(backconv.Convert(Event->Title()));
      cString shortText(backconv.Convert(Event->ShortText()));
@@ -40,6 +47,7 @@ bool cCharSet::Apply(cEvent *Event, tChannelID ChannelID)
      Event->SetTitle(conv.Convert(title));
      Event->SetShortText(conv.Convert(shortText));
      Event->SetDescription(conv.Convert(description));
+     DEBUG_CHARSET("Apply() - After: Title='%s'", Event->Title());
      }
   return false;
 }

@@ -40,6 +40,7 @@ static void StripControlCharacters(char *s)
 
 void FixOriginalEpgBugs(cEvent *event)
 {
+  DEBUG_BUGFIXES("FixOriginalEpgBugs() START - Event='%s'", event->Title());
   // Copy event title, shorttext and description to temporary variables
   // we don't want any "(null)" titles
   char *title = event->Title() ? strdup(event->Title()) : strdup("No title");
@@ -68,6 +69,7 @@ void FixOriginalEpgBugs(cEvent *event)
            free(description);
            shortText = s;
            description = d;
+           DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: QuotedShortText");
            }
         }
      }
@@ -84,6 +86,7 @@ void FixOriginalEpgBugs(cEvent *event)
         memmove(shortText, shortText + 1, strlen(shortText));
         description = shortText;
         shortText = NULL;
+        DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: BlankBeforeDescription");
         }
      }
 
@@ -102,6 +105,7 @@ void FixOriginalEpgBugs(cEvent *event)
         char *p = strrchr(shortText, '"');
         if (p)
            *p = 0;
+        DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: DoubleQuotedShortText");
         }
      }
 
@@ -113,6 +117,7 @@ void FixOriginalEpgBugs(cEvent *event)
      title = compactspace(title);
      shortText = compactspace(shortText);
      description = compactspace(description);
+     DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: RemoveFormatting");
      }
 
   // Sometimes they repeat the Title in the ShortText:
@@ -278,15 +283,22 @@ bool FixCharSets(cEvent *Event, tChannelID ChannelID)
 void StripHTML(cEvent *Event)
 {
   if (EpgfixerSetup.striphtml) {
+     DEBUG_HTMLSTRIP("StripHTML() - Processing Event='%s'", Event->Title());
      char *tmpstring = NULL;
      tmpstring = Event->Title() ? strdup(Event->Title()) : NULL;
+     DEBUG_HTMLSTRIP("StripHTML() - Title before: '%s'", tmpstring ? tmpstring : "NULL");
      Event->SetTitle(compactspace(striphtml(tmpstring)));
+     DEBUG_HTMLSTRIP("StripHTML() - Title after: '%s'", Event->Title() ? Event->Title() : "NULL");
      FREE(tmpstring);
      tmpstring = Event->ShortText() ? strdup(Event->ShortText()) : NULL;
+     DEBUG_HTMLSTRIP("StripHTML() - ShortText before: '%s'", tmpstring ? tmpstring : "NULL");
      Event->SetShortText(compactspace(striphtml(tmpstring)));
+     DEBUG_HTMLSTRIP("StripHTML() - ShortText after: '%s'", Event->ShortText() ? Event->ShortText() : "NULL");
      FREE(tmpstring);
      tmpstring = Event->Description() ? strdup(Event->Description()) : NULL;
+     DEBUG_HTMLSTRIP("StripHTML() - Description before: '%s'", tmpstring ? tmpstring : "NULL");
      Event->SetDescription(compactspace(striphtml(tmpstring)));
+     DEBUG_HTMLSTRIP("StripHTML() - Description after: '%s'", Event->Description() ? Event->Description() : "NULL");
      FREE(tmpstring);
      }
 }
@@ -586,6 +598,7 @@ int cListItem::GetChannelNum(int index)
 bool cListItem::IsActive(tChannelID ChannelID)
 {
   bool active = false;
+  DEBUG_CHANNELFILTER("IsActive() - ChannelID='%s', numchannels=%d", *ChannelID.ToString(), numchannels);
   if (numchannels > 0) {
      int i = 0;
 #if VDRVERSNUM >= 20301
@@ -593,28 +606,35 @@ bool cListItem::IsActive(tChannelID ChannelID)
      const cChannel *channel = Channels->GetByChannelID(ChannelID);
      if (!channel) {
         // Channel not found, treat as inactive
+        DEBUG_CHANNELFILTER("IsActive() - Channel NOT FOUND for ChannelID='%s'", *ChannelID.ToString());
         return false;
         }
      int channel_number = channel->Number();
+     DEBUG_CHANNELFILTER("IsActive() - Channel found: number=%d, name='%s'", channel_number, channel->Name());
 #else
      const cChannel *channel = Channels.GetByChannelID(ChannelID);
      if (!channel) {
         // Channel not found, treat as inactive
+        DEBUG_CHANNELFILTER("IsActive() - Channel NOT FOUND for ChannelID='%s'", *ChannelID.ToString());
         return false;
         }
      int channel_number = channel->Number();
+     DEBUG_CHANNELFILTER("IsActive() - Channel found: number=%d, name='%s'", channel_number, channel->Name());
 #endif
      while (i < numchannels) {
            if ((channel_number == GetChannelNum(i)) ||
                (GetChannelID(i) && (ChannelID == *GetChannelID(i)))) {
+              DEBUG_CHANNELFILTER("IsActive() - MATCHED filter at index %d", i);
               active = true;
               break;
               }
            ++i;
            }
      }
-  else
+  else {
+     DEBUG_CHANNELFILTER("IsActive() - No filters, ACTIVE by default");
      active = true;
+     }
   return active;
 }
 

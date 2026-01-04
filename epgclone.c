@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "epgclone.h"
 
 /* Global instance */
@@ -24,6 +25,8 @@ cEpgClone::~cEpgClone()
 }
 
 void cEpgClone::CloneEvent(cEvent *Source, cEvent *Dest) {
+  DEBUG_EPGCLONE("CloneEvent() - Source Event='%s', EventID=%u",
+                 Source->Title(), Source->EventID());
   Dest->SetEventID(Source->EventID());
   Dest->SetTableID(Source->TableID());
   Dest->SetVersion(Source->Version());
@@ -61,20 +64,26 @@ void cEpgClone::CloneEvent(cEvent *Source, cEvent *Dest) {
 #endif
      else
         channelID = tChannelID::InvalidID;
+     DEBUG_EPGCLONE("CloneEvent() - Destination channel number=%d, ChannelID='%s'",
+                    dest_num, *channelID.ToString());
      }
   else {
      if (dest_str)
         channelID = tChannelID::FromString(dest_str);
      else
         channelID = tChannelID::InvalidID;
+     DEBUG_EPGCLONE("CloneEvent() - Destination channel string='%s', ChannelID='%s'",
+                    dest_str ? dest_str : "NULL", *channelID.ToString());
      }
   if (channelID == tChannelID::InvalidID) {
      enabled = false;
      delete Dest;
      error("Destination channel %s not found for cloning, disabling cloning!", (dest_num ? *itoa(dest_num) : (dest_str ? dest_str : "NULL")));
      }
-  else
+  else {
+     DEBUG_EPGCLONE("CloneEvent() - Adding cloned event to channel '%s'", *channelID.ToString());
      AddEvent(Dest, channelID);
+     }
 }
 
 bool cEpgClone::Apply(cEvent *Event, tChannelID ChannelID)
@@ -86,6 +95,8 @@ bool cEpgClone::Apply(cEvent *Event, tChannelID ChannelID)
      }
 
   if (Event && enabled && IsActive(eventChannelID)) {
+     DEBUG_EPGCLONE("Apply() - Cloning Event='%s' from Channel='%s'",
+                    Event->Title(), *eventChannelID.ToString());
      cEvent *event = new cEvent(Event->EventID());
      CloneEvent(Event, event);
      return true;

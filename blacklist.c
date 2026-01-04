@@ -6,15 +6,20 @@
  */
 
 #include "blacklist.h"
+#include "config.h"
 
 /* Global instance */
 cEpgfixerList<cBlacklist, cChannel> EpgfixerBlacklists;
 
 bool cBlacklist::Apply(cChannel *Channel, tChannelID ChannelID)
 {
-  // ChannelID parameter unused for cChannel, but kept for consistent interface
-  if (enabled && IsActive(Channel->GetChannelID()))
+  if (enabled && IsActive(Channel->GetChannelID())) {
+     DEBUG_BLACKLIST("Apply() - Channel='%s' (%s) BLACKLISTED",
+                     *Channel->GetChannelID().ToString(), Channel->Name());
      return true;
+     }
+  DEBUG_BLACKLIST("Apply() - Channel='%s' (%s) allowed",
+                  *Channel->GetChannelID().ToString(), Channel->Name());
   return false;
 }
 

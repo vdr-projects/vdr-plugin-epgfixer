@@ -22,4 +22,14 @@ cEpgfixerSetup::cEpgfixerSetup()
   nobackticks = 0;
   components = 0;
   striphtml = 0;
+
+  // Debug flags - all disabled by default
+  debug_epghandler = 0;
+  debug_channelfilter = 0;
+  debug_regexp = 0;
+  debug_charset = 0;
+  debug_epgclone = 0;
+  debug_blacklist = 0;
+  debug_htmlstrip = 0;
+  debug_bugfixes = 0;
 }
