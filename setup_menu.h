@@ -27,4 +27,17 @@ public:
   virtual eOSState ProcessKey(eKeys Key);
 };
 
+class cMenuSetupEpgfixerDebug : public cMenuSetupPage
+{
+private:
+  cEpgfixerSetup newconfig;
+  void Set(void);
+
+protected:
+  virtual void Store(void);
+
+public:
+  cMenuSetupEpgfixerDebug(void);
+};
+
 #endif //__EPGFIXER_SETUP_MENU_H
