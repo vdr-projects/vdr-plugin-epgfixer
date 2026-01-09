@@ -265,7 +265,7 @@ bool cRegexp::Apply(cEvent *Event)
         cString resultstring = "";
         match_data = pcre2_match_data_create_from_pattern(re, NULL);
         // loop through matches
-        while ((rc = pcre2_match(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, start_offset, options, match_data, NULL)) > 1) {
+        while ((rc = pcre2_match(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, start_offset, options, match_data, NULL)) > 0) {
               ovector = pcre2_get_ovector_pointer(match_data);
               last_match_end = ovector[1];
               resultstring = cString::sprintf("%s%.*s%s", *resultstring, (int)(ovector[0] - start_offset), &tmpstring[start_offset], replacement);
