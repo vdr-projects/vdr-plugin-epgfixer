@@ -1,0 +1,247 @@
+# German translations for vdr-plugin-epgfixer
+# Deutsche Übersetzung für vdr-plugin-epgfixer
+# Copyright (C) 2026 THE vdr-epgfixer'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the vdr-epgfixer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: vdr-epgfixer 0.3.1\n"
+"Report-Msgid-Bugs-To: <see README>\n"
+"POT-Creation-Date: 2026-01-10 13:52+0100\n"
+"PO-Revision-Date: 2026-01-10 14:00+0100\n"
+"Last-Translator: Claude Sonnet 4.5\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Fix bugs in EPG"
+msgstr "EPG-Fehler beheben"
+
+msgid ""
+"RegexpChars$ "
+"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%~\\/?!()[]{}"
+"<>$^*.,:;-=#"
+msgstr ""
+"RegexpChars$ "
+"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜäöüß0123456789%~\\/?!()[]{}"
+"<>$^*.,:;-=#"
+
+msgid "Button$Cancel"
+msgstr "Abbrechen"
+
+msgid "Regular expressions"
+msgstr "Reguläre Ausdrücke"
+
+msgid "Edit regular expressions."
+msgstr "Reguläre Ausdrücke bearbeiten."
+
+msgid "Character set conversions"
+msgstr "Zeichensatz-Konvertierungen"
+
+msgid "Edit character set conversions."
+msgstr "Zeichensatz-Konvertierungen bearbeiten."
+
+msgid "EPG blacklists"
+msgstr "EPG-Blacklists"
+
+msgid "Edit EPG blacklists."
+msgstr "EPG-Blacklists bearbeiten."
+
+msgid "EPG cloning"
+msgstr "EPG-Klonen"
+
+msgid "Edit EPG data cloning."
+msgstr "EPG-Datenklonen bearbeiten."
+
+msgid "Debug logging"
+msgstr "Debug-Logging"
+
+msgid "Configure debug logging options."
+msgstr "Debug-Logging-Optionen konfigurieren."
+
+msgid "--- EPG bugfixes ---"
+msgstr "--- EPG-Fehlerbehebungen ---"
+
+msgid "Remove quotes from ShortText"
+msgstr "Anführungszeichen aus Kurztext entfernen"
+
+msgid ""
+"EPG bugfix level >= 1: Some channels put the ShortText in quotes and use "
+"either the ShortText or the Description field, depending on how long the "
+"string is:\n"
+"\n"
+"Title\n"
+"\"ShortText\". Description"
+msgstr ""
+"EPG-Bugfix Level >= 1: Einige Sender setzen den Kurztext in Anführungszeichen "
+"und verwenden entweder das Kurztext- oder das Beschreibungsfeld, abhängig von "
+"der Länge des Textes:\n"
+"\n"
+"Titel\n"
+"\"Kurztext\". Beschreibung"
+
+msgid "Move Description from ShortText"
+msgstr "Beschreibung aus Kurztext verschieben"
+
+msgid ""
+"EPG bugfix level >= 1: Some channels put the Description into the ShortText "
+"(preceded by a blank) if there is no actual ShortText and the Description is "
+"short enough:\n"
+"\n"
+"Title\n"
+" Description"
+msgstr ""
+"EPG-Bugfix Level >= 1: Einige Sender schreiben die Beschreibung in den Kurztext "
+"(mit vorangehendem Leerzeichen), wenn es keinen echten Kurztext gibt und die "
+"Beschreibung kurz genug ist:\n"
+"\n"
+"Titel\n"
+" Beschreibung"
+
+msgid "no"
+msgstr "nein"
+
+msgid "conservative"
+msgstr "konservativ"
+
+msgid "aggressive"
+msgstr "aggressiv"
+
+msgid "Remove repeated title from ShortText"
+msgstr "Wiederholten Titel aus Kurztext entfernen"
+
+msgid ""
+"EPG bugfix level >= 1: Remove repeated Title from ShortText:\n"
+"no=disabled\n"
+"conservative=whitespace boundaries only\n"
+"aggressive=also accept : | / as separators"
+msgstr ""
+"EPG-Bugfix Level >= 1: Wiederholten Titel aus Kurztext entfernen:\n"
+"nein=deaktiviert\n"
+"konservativ=nur an Leerzeichengrenzen\n"
+"aggressiv=akzeptiert auch : | / als Trennzeichen"
+
+msgid "Remove double quotes from ShortText"
+msgstr "Doppelte Anführungszeichen aus Kurztext entfernen"
+
+msgid ""
+"EPG bugfix level >= 1: Some channels put the ShortText between double "
+"quotes, which is nothing but annoying (some even put a '.' after the closing "
+"'\"'):\n"
+"\n"
+"Title\n"
+"\"ShortText\"[.]"
+msgstr ""
+"EPG-Bugfix Level >= 1: Einige Sender setzen den Kurztext zwischen doppelte "
+"Anführungszeichen, was nur störend ist (manche setzen sogar einen '.' nach "
+"dem schließenden '\"'):\n"
+"\n"
+"Titel\n"
+"\"Kurztext\"[.]"
+
+msgid "Remove useless formatting"
+msgstr "Überflüssige Formatierung entfernen"
+
+msgid ""
+"EPG bugfix level >= 2: Some channels apparently try to do some formatting in "
+"the texts, which is a bad idea because they have no way of knowing the width "
+"of the window that will actually display the text. Remove excess whitespace."
+msgstr ""
+"EPG-Bugfix Level >= 2: Einige Sender versuchen anscheinend, die Texte zu "
+"formatieren, was eine schlechte Idee ist, da sie die Fensterbreite nicht kennen "
+"können. Überflüssige Leerzeichen werden entfernt."
+
+msgid "Move long ShortText to Description"
+msgstr "Langen Kurztext in Beschreibung verschieben"
+
+msgid ""
+"EPG bugfix level >= 2: Some channels put a whole lot of information in the "
+"ShortText and leave the Description totally empty. So if the ShortText "
+"length exceeds 40, let's put this into the Description instead."
+msgstr ""
+"EPG-Bugfix Level >= 2: Einige Sender schreiben viele Informationen in den "
+"Kurztext und lassen die Beschreibung komplett leer. Wenn der Kurztext länger "
+"als 40 Zeichen ist, wird er in die Beschreibung verschoben."
+
+msgid "Prevent equal ShortText and Description"
+msgstr "Gleichen Kurztext und Beschreibung verhindern"
+
+msgid ""
+"EPG bugfix level >= 2: Some channels put the same information into ShortText "
+"and Description. In that case we delete one of them."
+msgstr ""
+"EPG-Bugfix Level >= 2: Einige Sender schreiben dieselbe Information in Kurztext "
+"und Beschreibung. In diesem Fall wird eine davon gelöscht."
+
+msgid "Replace backticks with single quotes"
+msgstr "Backticks durch einfache Anführungszeichen ersetzen"
+
+msgid ""
+"EPG bugfix level >= 2: Some channels use the ` (\"backtick\") character, "
+"where a ' (single quote) would be normally used. Actually, \"backticks\" in "
+"normal text don't make much sense, so let's replace them."
+msgstr ""
+"EPG-Bugfix Level >= 2: Einige Sender verwenden das ` (\"Backtick\") Zeichen, "
+"wo normalerweise ein ' (einfaches Anführungszeichen) verwendet würde. \"Backticks\" "
+"machen in normalem Text wenig Sinn, daher werden sie ersetzt."
+
+msgid "Fix stream component descriptions"
+msgstr "Stream-Komponentenbeschreibungen korrigieren"
+
+msgid ""
+"EPG bugfix level = 3: The stream components have a \"description\" field "
+"which some channels apparently have no idea of how to set correctly."
+msgstr ""
+"EPG-Bugfix Level = 3: Die Stream-Komponenten haben ein \"Beschreibung\"-Feld, "
+"das einige Sender anscheinend nicht korrekt setzen können."
+
+msgid "Strip HTML entities"
+msgstr "HTML-Entities entfernen"
+
+msgid "Convert HTML entities from all fields to matching regular characters."
+msgstr "HTML-Entities in allen Feldern in passende normale Zeichen umwandeln."
+
+msgid "Button$Load"
+msgstr "Laden"
+
+msgid "Button$Clear EPG"
+msgstr "EPG löschen"
+
+msgid "Loading configuration files..."
+msgstr "Lade Konfigurationsdateien..."
+
+msgid "Clearing EPG data..."
+msgstr "Lösche EPG-Daten..."
+
+msgid "Help"
+msgstr "Hilfe"
+
+msgid "--- Debug Logging Options ---"
+msgstr "--- Debug-Logging-Optionen ---"
+
+msgid "  EPG Handler"
+msgstr "  EPG-Handler"
+
+msgid "  Channel Filtering"
+msgstr "  Kanalfilterung"
+
+msgid "  Regular Expressions"
+msgstr "  Reguläre Ausdrücke"
+
+msgid "  Character Set Conversion"
+msgstr "  Zeichensatz-Konvertierung"
+
+msgid "  EPG Cloning"
+msgstr "  EPG-Klonen"
+
+msgid "  Blacklist"
+msgstr "  Blacklist"
+
+msgid "  HTML Stripping"
+msgstr "  HTML-Entfernung"
+
+msgid "  Original EPG Bug Fixes"
+msgstr "  Original-EPG-Fehlerbehebungen"
