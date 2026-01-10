@@ -33,12 +33,16 @@ bool cCharSet::Apply(cEvent *Event, tChannelID ChannelID)
      }
 
   if (enabled && IsActive(eventChannelID)) {
-     DEBUG_CHARSET("Apply() - Event='%s', Channel='%s'",
-                   Event->Title(), *eventChannelID.ToString());
-     DEBUG_CHARSET("Apply() - Conversion: %s -> %s",
+     // Save original values for comparison
+     const char *orig_title = Event->Title() ? Event->Title() : "";
+     const char *orig_shorttext = Event->ShortText() ? Event->ShortText() : "";
+     const char *orig_description = Event->Description() ? Event->Description() : "";
+
+     DEBUG_CHARSET("Apply() - Event='%s', Channel='%s', Conversion: %s -> %s",
+                   Event->Title(), *eventChannelID.ToString(),
                    origcharset ? origcharset : "iso6937",
                    realcharset ? realcharset : "system");
-     DEBUG_CHARSET("Apply() - Before: Title='%s'", Event->Title());
+
      cCharSetConv backconv(cCharSetConv::SystemCharacterTable(), origcharset ? origcharset : "iso6937");
      cString title(backconv.Convert(Event->Title()));
      cString shortText(backconv.Convert(Event->ShortText()));
@@ -47,17 +51,34 @@ bool cCharSet::Apply(cEvent *Event, tChannelID ChannelID)
      Event->SetTitle(conv.Convert(title));
      Event->SetShortText(conv.Convert(shortText));
      Event->SetDescription(conv.Convert(description));
-     DEBUG_CHARSET("Apply() - After: Title='%s'", Event->Title());
+
+     // Log only if something changed
+     bool changed = false;
+     if (strcmp(orig_title, Event->Title() ? Event->Title() : "") != 0) {
+        DEBUG_CHARSET("Apply() - Title: '%s' => '%s'", orig_title, Event->Title());
+        changed = true;
+        }
+     if (strcmp(orig_shorttext, Event->ShortText() ? Event->ShortText() : "") != 0) {
+        DEBUG_CHARSET("Apply() - ShortText: '%s' => '%s'", orig_shorttext, Event->ShortText());
+        changed = true;
+        }
+     if (strcmp(orig_description, Event->Description() ? Event->Description() : "") != 0) {
+        DEBUG_CHARSET("Apply() - Description: '%s' => '%s'", orig_description, Event->Description());
+        changed = true;
+        }
+     if (!changed) {
+        DEBUG_CHARSET("Apply() - No changes needed");
+        }
      }
   return false;
 }
 
-void cCharSet::SetFromString(char *s, bool Enabled)
+void cCharSet::SetFromString(char *s, bool Enabled, int LineNumber)
 {
   FREE(origcharset);
   FREE(realcharset);
   Free();
-  cListItem::SetFromString(s, Enabled);
+  cListItem::SetFromString(s, Enabled, LineNumber);
   if (enabled) {
      char *p = (s[0] == '!') ? s + 1 : s;
      char *r = strchr(p, ':');

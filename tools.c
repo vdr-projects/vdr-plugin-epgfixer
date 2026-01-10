@@ -283,23 +283,42 @@ bool FixCharSets(cEvent *Event, tChannelID ChannelID)
 void StripHTML(cEvent *Event)
 {
   if (EpgfixerSetup.striphtml) {
-     DEBUG_HTMLSTRIP("StripHTML() - Processing Event='%s'", Event->Title());
+     bool changed = false;
      char *tmpstring = NULL;
+
+     // Process Title
      tmpstring = Event->Title() ? strdup(Event->Title()) : NULL;
-     DEBUG_HTMLSTRIP("StripHTML() - Title before: '%s'", tmpstring ? tmpstring : "NULL");
+     const char *original_title = tmpstring;
      Event->SetTitle(compactspace(striphtml(tmpstring)));
-     DEBUG_HTMLSTRIP("StripHTML() - Title after: '%s'", Event->Title() ? Event->Title() : "NULL");
+     if (original_title && Event->Title() && strcmp(original_title, Event->Title()) != 0) {
+        DEBUG_HTMLSTRIP("StripHTML() - Title: '%s' => '%s'", original_title, Event->Title());
+        changed = true;
+        }
      FREE(tmpstring);
+
+     // Process ShortText
      tmpstring = Event->ShortText() ? strdup(Event->ShortText()) : NULL;
-     DEBUG_HTMLSTRIP("StripHTML() - ShortText before: '%s'", tmpstring ? tmpstring : "NULL");
+     const char *original_shorttext = tmpstring;
      Event->SetShortText(compactspace(striphtml(tmpstring)));
-     DEBUG_HTMLSTRIP("StripHTML() - ShortText after: '%s'", Event->ShortText() ? Event->ShortText() : "NULL");
+     if (original_shorttext && Event->ShortText() && strcmp(original_shorttext, Event->ShortText()) != 0) {
+        DEBUG_HTMLSTRIP("StripHTML() - ShortText: '%s' => '%s'", original_shorttext, Event->ShortText());
+        changed = true;
+        }
      FREE(tmpstring);
+
+     // Process Description
      tmpstring = Event->Description() ? strdup(Event->Description()) : NULL;
-     DEBUG_HTMLSTRIP("StripHTML() - Description before: '%s'", tmpstring ? tmpstring : "NULL");
+     const char *original_description = tmpstring;
      Event->SetDescription(compactspace(striphtml(tmpstring)));
-     DEBUG_HTMLSTRIP("StripHTML() - Description after: '%s'", Event->Description() ? Event->Description() : "NULL");
+     if (original_description && Event->Description() && strcmp(original_description, Event->Description()) != 0) {
+        DEBUG_HTMLSTRIP("StripHTML() - Description: '%s' => '%s'", original_description, Event->Description());
+        changed = true;
+        }
      FREE(tmpstring);
+
+     if (!changed) {
+        DEBUG_HTMLSTRIP("StripHTML() - No changes for Event='%s'", Event->Title() ? Event->Title() : "NULL");
+        }
      }
 }
 
@@ -563,6 +582,7 @@ cListItem::cListItem()
   numchannels = 0;
   channels_num = NULL;
   channels_id = NULL;
+  lineNumber = 0;
 }
 
 cListItem::~cListItem(void)
@@ -689,9 +709,10 @@ int cListItem::LoadChannelsFromString(const char *string)
   return numchannels;
 }
 
-void cListItem::SetFromString(char *s, bool Enabled)
+void cListItem::SetFromString(char *s, bool Enabled, int LineNumber)
 {
   enabled = Enabled;
+  lineNumber = LineNumber;
   if (s[0] == '!')
      string = strdup(s + 1);
   else

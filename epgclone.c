@@ -104,12 +104,12 @@ bool cEpgClone::Apply(cEvent *Event, tChannelID ChannelID)
   return false;
 }
 
-void cEpgClone::SetFromString(char *s, bool Enabled)
+void cEpgClone::SetFromString(char *s, bool Enabled, int LineNumber)
 {
   dest_num = 0;
   FREE(dest_str);
   Free();
-  cListItem::SetFromString(s, Enabled);
+  cListItem::SetFromString(s, Enabled, LineNumber);
   if (enabled) {
      char *p = (s[0] == '!') ? s + 1 : s;
      char *f = strchr(p, '=');

@@ -23,10 +23,10 @@ bool cBlacklist::Apply(cChannel *Channel, tChannelID ChannelID)
   return false;
 }
 
-void cBlacklist::SetFromString(char *s, bool Enabled)
+void cBlacklist::SetFromString(char *s, bool Enabled, int LineNumber)
 {
   Free();
-  cListItem::SetFromString(s, Enabled);
+  cListItem::SetFromString(s, Enabled, LineNumber);
   if (enabled) {
      char *p = (s[0] == '!') ? s + 1 : s;
      numchannels = LoadChannelsFromString(p);
