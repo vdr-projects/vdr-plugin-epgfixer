@@ -26,7 +26,7 @@
 
 void FixOriginalEpgBugs(cEvent *event);
 bool FixCharSets(cEvent *Event);
-bool FixBugs(cEvent *Event);
+bool FixBugs(cEvent *Event, tChannelID ChannelID = tChannelID());
 void StripHTML(cEvent *Event);
 
 // --- Add event to schedule --------------------------------------------
@@ -43,6 +43,7 @@ protected:
   int *channels_num;
   tChannelID *channels_id;
   int numchannels;
+  int lineNumber;
   void Free();
   tChannelID *GetChannelID(int index);
   int GetChannelNum(int index);
@@ -54,9 +55,10 @@ public:
   virtual ~cListItem();
   virtual bool Apply(cChannel *Channel) { return 0; }
   virtual bool Apply(cEvent *Event) { return 0; }
-  void SetFromString(char *string, bool Enabled);
+  void SetFromString(char *string, bool Enabled, int LineNumber = 0);
   const char *GetString() { return string; }
   bool IsEnabled(void) { return enabled; }
+  int GetLineNumber(void) { return lineNumber; }
   void ToggleEnabled(void);
   void PrintConfigLineToFile(FILE *f);
 };
@@ -95,7 +97,7 @@ template<class LISTITEM, class PARAMETER> bool cEpgfixerList<LISTITEM, PARAMETER
               ++line;
               if (!isempty(s)) {
                  this->Add(new LISTITEM());
-                 cList<LISTITEM>::Last()->LISTITEM::SetFromString(s, true);
+                 cList<LISTITEM>::Last()->LISTITEM::SetFromString(s, true, line);
                  if (cList<LISTITEM>::Last()->IsEnabled()) {
                     ++count;
                     logmsg = cString::sprintf("%s%s%i", *logmsg, count == 1 ? " " : ",", line);

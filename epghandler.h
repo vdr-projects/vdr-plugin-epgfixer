@@ -13,10 +13,12 @@
 
 class cEpgfixerEpgHandler : public cEpgHandler
 {
+private:
+  const cChannel *currentChannel;
 public:
-  cEpgfixerEpgHandler(void) {};
+  cEpgfixerEpgHandler(void) : currentChannel(NULL) {};
 #if VDRVERSNUM >= 20304
-  virtual bool BeginSegmentTransfer(const cChannel *Channel, bool Dummy) { return true; }
+  virtual bool BeginSegmentTransfer(const cChannel *Channel, bool Dummy);
 #endif
   virtual bool HandleEvent(cEvent *Event);
   virtual bool IgnoreChannel(const cChannel *Channel);
