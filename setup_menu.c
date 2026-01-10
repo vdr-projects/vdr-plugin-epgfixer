@@ -203,11 +203,10 @@ void cMenuSetupEpgfixer::Set(void)
                             &newconfig.blankbeforedescription));
   help.Append(tr("EPG bugfix level >= 1: Some channels put the Description into the ShortText (preceded by a blank) if there is no actual ShortText and the Description is short enough:\n\nTitle\n Description"));
 
-  const char *repeatedTitleModes[] = {
-    tr("no"),
-    tr("conservative"),
-    tr("aggressive")
-  };
+  static const char *repeatedTitleModes[3];
+  repeatedTitleModes[0] = tr("no");
+  repeatedTitleModes[1] = tr("conservative");
+  repeatedTitleModes[2] = tr("aggressive");
   Add(new cMenuEditStraItem(tr("Remove repeated title from ShortText"), &newconfig.repeatedtitle, 3, repeatedTitleModes));
   help.Append(tr("EPG bugfix level >= 1: Remove repeated Title from ShortText:\nno=disabled\nconservative=whitespace boundaries only\naggressive=also accept : | / as separators"));
   Add(new cMenuEditBoolItem(tr("Remove double quotes from ShortText"),
