@@ -24,7 +24,7 @@ public:
   virtual ~cEpgClone();
   using cListItem::Apply;
   virtual bool Apply(cEvent *Event);
-  void SetFromString(char *string, bool Enabled);
+  void SetFromString(char *string, bool Enabled, int LineNumber = 0);
 };
 
 // Global instance

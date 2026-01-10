@@ -105,6 +105,9 @@ int cRegexp::ParseModifiers(char *modstring, int substitution)
          case 'x':
            mods |= PCRE2_EXTENDED;
            break;
+         case 'X':
+           mods |= PCRE2_EXTENDED_MORE;
+           break;
          default:
            break;
          }
@@ -151,7 +154,7 @@ void cRegexp::ParseRegexp(char *restring)
      }
 }
 
-void cRegexp::SetFromString(char *s, bool Enabled)
+void cRegexp::SetFromString(char *s, bool Enabled, int LineNumber)
 {
   cmodifiers = 0;
   modifiers = 0;
@@ -163,7 +166,7 @@ void cRegexp::SetFromString(char *s, bool Enabled)
   FreeCompiled();
   csource = REGEXP_UNDEFINED;
   source = REGEXP_UNDEFINED;
-  cListItem::SetFromString(s, Enabled);
+  cListItem::SetFromString(s, Enabled, LineNumber);
   if (enabled) {
      char *p = strchr(s, '=');
      if (p) {
@@ -221,8 +224,11 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
      }
 
   if (enabled && re && Event && IsActive(eventChannelID)) {
-     DEBUG_REGEXP("Apply() - Processing Event='%s', Pattern='%s'",
-                  Event->Title(), regexp ? regexp : "NULL");
+     const char *fieldName = (source == REGEXP_TITLE) ? "title" :
+                              (source == REGEXP_SHORTTEXT) ? "shorttext" :
+                              (source == REGEXP_DESCRIPTION) ? "description" : "unknown";
+     DEBUG_REGEXP("Apply() - Line %d: Event='%s', Field=%s",
+                  lineNumber, Event->Title() ? Event->Title() : "(no title)", fieldName);
      cString tmpstring;
      switch (source) {
        case REGEXP_TITLE:
@@ -241,7 +247,6 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
      if (!*tmpstring)
         tmpstring = "";
      int tmpstringlen = strlen(*tmpstring);
-     PCRE2_SIZE *ovector;
      int rc = 0;
      cString ctmpstring;
      switch (csource) {
@@ -261,19 +266,23 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
      pcre2_match_data *match_data;
      // is cre set and are there any matches?
      if (cre) {
+        const char *condFieldName = (csource == REGEXP_TITLE) ? "title" :
+                                     (csource == REGEXP_SHORTTEXT) ? "shorttext" :
+                                     (csource == REGEXP_DESCRIPTION) ? "description" : "unknown";
         match_data = pcre2_match_data_create_from_pattern(cre, NULL);
         rc = pcre2_match(cre, (PCRE2_SPTR8)*ctmpstring, strlen(*ctmpstring), 0, 0, match_data, NULL);
         pcre2_match_data_free(match_data);
         // pcre2_match returns (number of capture groups + 1) if there are matches
         if (rc < 1) {
+           DEBUG_REGEXP("Apply() - Line %d: Conditional check FAILED on %s, rule skipped",
+                       lineNumber, condFieldName);
            return false;
         }
+        DEBUG_REGEXP("Apply() - Line %d: Conditional check PASSED on %s, applying rule",
+                    lineNumber, condFieldName);
        }
 
      if (replace != NONE) {// find and replace
-        DEBUG_REGEXP("Apply() - Substitution mode, input='%s', replacement='%s'",
-                     *tmpstring, replacement);
-        PCRE2_SIZE outlengthused;
         PCRE2_SIZE outbuffsize = tmpstringlen * 2 + 256;
         PCRE2_UCHAR8 *outbuff = (PCRE2_UCHAR8 *)malloc(outbuffsize);
 
@@ -284,9 +293,11 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
                              outbuff, &outbuffsize);
 
         if (rc == PCRE2_ERROR_NOMEMORY) {
-           // Buffer too small, reallocate with the size needed
+           // Buffer too small, reallocate with the size needed (+ 1 for null terminator)
            free(outbuff);
-           outbuff = (PCRE2_UCHAR8 *)malloc(outbuffsize);
+           PCRE2_SIZE newbuffsize = outbuffsize + 1;
+           outbuff = (PCRE2_UCHAR8 *)malloc(newbuffsize);
+           outbuffsize = newbuffsize;  // Reset to actual buffer size for second call
            rc = pcre2_substitute(re, (PCRE2_SPTR8)*tmpstring, tmpstringlen, 0, options,
                                 NULL, NULL, (PCRE2_SPTR8)replacement, PCRE2_ZERO_TERMINATED,
                                 outbuff, &outbuffsize);
@@ -295,7 +306,15 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
         if (rc >= 0) {
            // Null-terminate the output buffer (pcre2_substitute doesn't do this)
            outbuff[outbuffsize] = '\0';
-           DEBUG_REGEXP("Apply() - Substitution SUCCESS, output='%s'", (const char *)outbuff);
+           // Only log if something actually changed
+           if (strcmp(*tmpstring, (const char *)outbuff) != 0) {
+              DEBUG_REGEXP("Apply() - Line %d CHANGED %s: '%s' => '%s'",
+                          lineNumber, fieldName, *tmpstring, (const char *)outbuff);
+              }
+           else {
+              DEBUG_REGEXP("Apply() - Line %d: Pattern matched but no change to %s",
+                          lineNumber, fieldName);
+              }
            switch (source) {
              case REGEXP_TITLE:
                Event->SetTitle((const char *)outbuff);
@@ -318,7 +337,7 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
         free(outbuff);
         }
      else {// use backreferences
-        DEBUG_REGEXP("Apply() - Backreference mode");
+        DEBUG_REGEXP("Apply() - Line %d: Backreference mode, testing %s", lineNumber, fieldName);
         PCRE2_UCHAR8 *capturestring;
         PCRE2_SIZE capturelen;
         match_data = pcre2_match_data_create_from_pattern(re, NULL);
@@ -328,7 +347,7 @@ bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
            error("maximum number of captured substrings has been exceeded\n");
            }
         else if (rc > 1) {
-           DEBUG_REGEXP("Apply() - Backreference matched, %d groups", rc);
+           DEBUG_REGEXP("Apply() - Line %d MATCHED with %d capture groups", lineNumber, rc - 1);
            int i = 0;
            // loop through all possible backreferences
            // TODO allow duplicate backreference names?
