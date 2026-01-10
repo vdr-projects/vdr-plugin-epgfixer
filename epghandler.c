@@ -10,12 +10,25 @@
 #include "tools.h"
 #include "epghandler.h"
 
+#if VDRVERSNUM >= 20304
+bool cEpgfixerEpgHandler::BeginSegmentTransfer(const cChannel *Channel, bool Dummy)
+{
+  currentChannel = Channel;
+  return true;
+}
+#endif
+
 bool cEpgfixerEpgHandler::FixEpgBugs(cEvent *Event)
 {
+  // Get ChannelID from Event, or use currentChannel as fallback for events without schedule
+  tChannelID channelID = Event->ChannelID();
+  if (!channelID.Valid() && currentChannel)
+     channelID = currentChannel->GetChannelID();
+
   FixOriginalEpgBugs(Event);
   FixCharSets(Event);
   StripHTML(Event);
-  FixBugs(Event);
+  FixBugs(Event, channelID);
   return false;
 }
 

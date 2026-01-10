@@ -133,12 +133,13 @@ void cRegexp::ParseRegexp(char *restring)
                  if (*(p - 1) != '\\') {
                     *p = 0;
                     regexp = strdup(&restring[2]);
-                    if (*(p + 1) != '/') // 
+                    if (*(p + 1) != '/') //
                        replacement = strdup(p + 1);
                     else
                        replacement = strdup("");
                     break;
                     }
+                 p++; // advance past escaped slash to avoid infinite loop
                  }
            }
         else if (restring[0] == 'm') // parse regexp format 'm//'
@@ -209,9 +210,15 @@ void cRegexp::SetFromString(char *s, bool Enabled)
      }
 }
 
-bool cRegexp::Apply(cEvent *Event)
+bool cRegexp::Apply(cEvent *Event, tChannelID ChannelID)
 {
-  if (enabled && re && IsActive(Event->ChannelID())) {
+  // Use provided ChannelID if Event->ChannelID() is invalid
+  tChannelID eventChannelID = Event ? Event->ChannelID() : tChannelID();
+  if (!eventChannelID.Valid() && ChannelID.Valid()) {
+     eventChannelID = ChannelID;
+     }
+
+  if (enabled && re && Event && IsActive(eventChannelID)) {
      cString tmpstring;
      switch (source) {
        case REGEXP_TITLE:
