@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-epgfixer 0.3.1\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2012-08-14 13:49+0300\n"
+"POT-Creation-Date: 2026-01-07 19:20+0100\n"
 "PO-Revision-Date: 2012-05-09 23:20+0300\n"
 "Last-Translator: Matti Lehtimäki <matti.lehtimaki@gmail.com>\n"
 "Language-Team: Finnish <vdr@linuxtv.org>\n"
@@ -49,6 +49,12 @@ msgstr "Ohjelmatietojen kopiointi"
 msgid "Edit EPG data cloning."
 msgstr "Muokkaa ohjelmatietojen kopiointia. Tällä voit kopioida kanavan ohjelmatiedot toiselle kanavalle."
 
+msgid "Debug logging"
+msgstr "Virheenkorjausloki"
+
+msgid "Configure debug logging options."
+msgstr "Määritä virheenkorjauslokin asetukset."
+
 msgid "--- EPG bugfixes ---"
 msgstr "--- Ohjelmaoppaan korjaukset ---"
 
@@ -80,19 +86,28 @@ msgstr ""
 "Otsikko\n"
 " Kuvaus"
 
+msgid "no"
+msgstr "ei"
+
+msgid "conservative"
+msgstr "varovainen"
+
+msgid "aggressive"
+msgstr "aggressiivinen"
+
 msgid "Remove repeated title from ShortText"
 msgstr "Poista nimi lyhyestä kuvauksesta"
 
 msgid ""
-"EPG bugfix level >= 1: Sometimes they repeat the Title in the ShortText:\n"
-"\n"
-"Title\n"
-"Title"
+"EPG bugfix level >= 1: Remove repeated Title from ShortText:\n"
+"no=disabled\n"
+"conservative=whitespace boundaries only\n"
+"aggressive=also accept : | / as separators"
 msgstr ""
-"Ohjelmaoppaan korjaustaso >= 1: Joskus otsikko toistetaan lyhyessä kuvauksessa:\n"
-"\n"
-"Otsikko\n"
-"Otsikko"
+"Ohjelmaoppaan korjaustaso >= 1: Poista toistuva otsikko lyhyestä kuvauksesta:\n"
+"ei=pois käytöstä\n"
+"varovainen=vain välilyöntirajoilla\n"
+"aggressiivinen=hyväksy myös : | / erottimina"
 
 msgid "Remove double quotes from ShortText"
 msgstr "Poista lainausmerkit lyhyestä kuvauksesta"
@@ -158,3 +173,41 @@ msgstr "Tyhjennetään EPG tietoja..."
 
 msgid "Help"
 msgstr "Ohje"
+
+msgid "--- Debug Logging Options ---"
+msgstr "--- Virheenkorjauslokin asetukset ---"
+
+msgid "  EPG Handler"
+msgstr "  EPG-käsittelijä"
+
+msgid "  Channel Filtering"
+msgstr "  Kanavasuodatus"
+
+msgid "  Regular Expressions"
+msgstr "  Säännölliset lausekkeet"
+
+msgid "  Character Set Conversion"
+msgstr "  Merkistömuunnos"
+
+msgid "  EPG Cloning"
+msgstr "  Ohjelmatietojen kopiointi"
+
+msgid "  Blacklist"
+msgstr "  Musta lista"
+
+msgid "  HTML Stripping"
+msgstr "  HTML:n poisto"
+
+msgid "  Original EPG Bug Fixes"
+msgstr "  Alkuperäiset EPG-korjaukset"
+
+#~ msgid ""
+#~ "EPG bugfix level >= 1: Sometimes they repeat the Title in the ShortText:\n"
+#~ "\n"
+#~ "Title\n"
+#~ "Title"
+#~ msgstr ""
+#~ "Ohjelmaoppaan korjaustaso >= 1: Joskus otsikko toistetaan lyhyessä kuvauksessa:\n"
+#~ "\n"
+#~ "Otsikko\n"
+#~ "Otsikko"
