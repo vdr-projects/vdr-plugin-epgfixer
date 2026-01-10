@@ -40,6 +40,7 @@ static void StripControlCharacters(char *s)
 
 void FixOriginalEpgBugs(cEvent *event)
 {
+  DEBUG_BUGFIXES("FixOriginalEpgBugs() START - Event='%s'", event->Title());
   // Copy event title, shorttext and description to temporary variables
   // we don't want any "(null)" titles
   char *title = event->Title() ? strdup(event->Title()) : strdup("No title");
@@ -68,6 +69,7 @@ void FixOriginalEpgBugs(cEvent *event)
            free(description);
            shortText = s;
            description = d;
+           DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: QuotedShortText");
            }
         }
      }
@@ -84,18 +86,11 @@ void FixOriginalEpgBugs(cEvent *event)
         memmove(shortText, shortText + 1, strlen(shortText));
         description = shortText;
         shortText = NULL;
+        DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: BlankBeforeDescription");
         }
      }
 
-  // Sometimes they repeat the Title in the ShortText:
-  //
-  // Title
-  // Title
-  //
-  if (EpgfixerSetup.repeatedtitle && shortText && strcmp(title, shortText) == 0) {
-     free(shortText);
-     shortText = NULL;
-     }
+  // Repeated title check moved to after compactspace - see below
 
   // Some channels put the ShortText between double quotes, which is nothing
   // but annoying (some even put a '.' after the closing '"'):
@@ -110,6 +105,7 @@ void FixOriginalEpgBugs(cEvent *event)
         char *p = strrchr(shortText, '"');
         if (p)
            *p = 0;
+        DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: DoubleQuotedShortText");
         }
      }
 
@@ -121,6 +117,35 @@ void FixOriginalEpgBugs(cEvent *event)
      title = compactspace(title);
      shortText = compactspace(shortText);
      description = compactspace(description);
+     DEBUG_BUGFIXES("FixOriginalEpgBugs() - Applied: RemoveFormatting");
+     }
+
+  // Sometimes they repeat the Title in the ShortText:
+  // This check runs AFTER compactspace to ensure clean comparison
+  if (EpgfixerSetup.repeatedtitle && title && shortText) {
+     int titleLen = strlen(title);
+     // Check if shortText starts with title (case-insensitive)
+     if (strncasecmp(title, shortText, titleLen) == 0) {
+        char *afterTitle = shortText + titleLen;
+        // Only match if title is followed by end-of-string or whitespace
+        if (*afterTitle == '\0' || *afterTitle == ' ' || *afterTitle == '\t' || *afterTitle == '\n' || *afterTitle == '\r') {
+           char *remainder = afterTitle;
+           // Skip any whitespace after the title
+           while (*remainder && (*remainder == ' ' || *remainder == '\t' || *remainder == '\n' || *remainder == '\r'))
+              remainder++;
+
+           // If there's remaining text, keep it; otherwise remove shortText entirely
+           if (*remainder) {
+              char *newShortText = strdup(remainder);
+              free(shortText);
+              shortText = newShortText;
+              }
+           else {
+              free(shortText);
+              shortText = NULL;
+              }
+           }
+        }
      }
 
 #define MAX_USEFUL_EPISODE_LENGTH 40
@@ -245,9 +270,20 @@ void FixOriginalEpgBugs(cEvent *event)
   free(description);
 }
 
-bool FixBugs(cEvent *Event)
+bool FixBugs(cEvent *Event, tChannelID ChannelID)
 {
-  return EpgfixerRegexps.Apply(Event);
+  // Apply regexps manually to pass ChannelID parameter
+  int res = false;
+  cRegexp *item = (cRegexp *)(EpgfixerRegexps.First());
+  while (item) {
+        if (item->IsEnabled()) {
+           int ret = item->Apply(Event, ChannelID);
+           if (ret && !res)
+              res = true;
+           }
+        item = (cRegexp *)(item->Next());
+        }
+  return res;
 }
 
 bool FixCharSets(cEvent *Event)
@@ -258,16 +294,42 @@ bool FixCharSets(cEvent *Event)
 void StripHTML(cEvent *Event)
 {
   if (EpgfixerSetup.striphtml) {
+     bool changed = false;
      char *tmpstring = NULL;
+
+     // Process Title
      tmpstring = Event->Title() ? strdup(Event->Title()) : NULL;
-     Event->SetTitle(striphtml(tmpstring));
+     const char *original_title = tmpstring;
+     Event->SetTitle(compactspace(striphtml(tmpstring)));
+     if (original_title && Event->Title() && strcmp(original_title, Event->Title()) != 0) {
+        DEBUG_HTMLSTRIP("StripHTML() - Title: '%s' => '%s'", original_title, Event->Title());
+        changed = true;
+        }
      FREE(tmpstring);
+
+     // Process ShortText
      tmpstring = Event->ShortText() ? strdup(Event->ShortText()) : NULL;
-     Event->SetShortText(striphtml(tmpstring));
+     const char *original_shorttext = tmpstring;
+     Event->SetShortText(compactspace(striphtml(tmpstring)));
+     if (original_shorttext && Event->ShortText() && strcmp(original_shorttext, Event->ShortText()) != 0) {
+        DEBUG_HTMLSTRIP("StripHTML() - ShortText: '%s' => '%s'", original_shorttext, Event->ShortText());
+        changed = true;
+        }
      FREE(tmpstring);
+
+     // Process Description
      tmpstring = Event->Description() ? strdup(Event->Description()) : NULL;
-     Event->SetDescription(striphtml(tmpstring));
+     const char *original_description = tmpstring;
+     Event->SetDescription(compactspace(striphtml(tmpstring)));
+     if (original_description && Event->Description() && strcmp(original_description, Event->Description()) != 0) {
+        DEBUG_HTMLSTRIP("StripHTML() - Description: '%s' => '%s'", original_description, Event->Description());
+        changed = true;
+        }
      FREE(tmpstring);
+
+     if (!changed) {
+        DEBUG_HTMLSTRIP("StripHTML() - No changes for Event='%s'", Event->Title() ? Event->Title() : "NULL");
+        }
      }
 }
 
@@ -312,8 +374,8 @@ static struct conv_table post_conv_table[] =
   {"&#62;",    "\x3e"},
   {"&#91;",    "\x5b"},
   {"&#93;",    "\x5d"},
-  {"&nbsp;",   "\xc2\xa0"},
-  {"&#160;",   "\xc2\xa0"},
+  {"&nbsp;",   "\x20"},
+  {"&#160;",   "\x20"},
   {"&deg;",    "\xc2\xb0"},
   {"&#176;",   "\xc2\xb0"},
   {"&acute;",  "\xc2\xb4"},
@@ -531,6 +593,7 @@ cListItem::cListItem()
   numchannels = 0;
   channels_num = NULL;
   channels_id = NULL;
+  lineNumber = 0;
 }
 
 cListItem::~cListItem(void)
@@ -566,25 +629,43 @@ int cListItem::GetChannelNum(int index)
 bool cListItem::IsActive(tChannelID ChannelID)
 {
   bool active = false;
+  DEBUG_CHANNELFILTER("IsActive() - ChannelID='%s', numchannels=%d", *ChannelID.ToString(), numchannels);
   if (numchannels > 0) {
      int i = 0;
 #if VDRVERSNUM >= 20301
      LOCK_CHANNELS_READ;
-     int channel_number = Channels->GetByChannelID(ChannelID)->Number();
+     const cChannel *channel = Channels->GetByChannelID(ChannelID);
+     if (!channel) {
+        // Channel not found, treat as inactive
+        DEBUG_CHANNELFILTER("IsActive() - Channel NOT FOUND for ChannelID='%s'", *ChannelID.ToString());
+        return false;
+        }
+     int channel_number = channel->Number();
+     DEBUG_CHANNELFILTER("IsActive() - Channel found: number=%d, name='%s'", channel_number, channel->Name());
 #else
-     int channel_number = Channels.GetByChannelID(ChannelID)->Number();
+     const cChannel *channel = Channels.GetByChannelID(ChannelID);
+     if (!channel) {
+        // Channel not found, treat as inactive
+        DEBUG_CHANNELFILTER("IsActive() - Channel NOT FOUND for ChannelID='%s'", *ChannelID.ToString());
+        return false;
+        }
+     int channel_number = channel->Number();
+     DEBUG_CHANNELFILTER("IsActive() - Channel found: number=%d, name='%s'", channel_number, channel->Name());
 #endif
      while (i < numchannels) {
            if ((channel_number == GetChannelNum(i)) ||
                (GetChannelID(i) && (ChannelID == *GetChannelID(i)))) {
+              DEBUG_CHANNELFILTER("IsActive() - MATCHED filter at index %d", i);
               active = true;
               break;
               }
            ++i;
            }
      }
-  else
+  else {
+     DEBUG_CHANNELFILTER("IsActive() - No filters, ACTIVE by default");
      active = true;
+     }
   return active;
 }
 
@@ -639,9 +720,10 @@ int cListItem::LoadChannelsFromString(const char *string)
   return numchannels;
 }
 
-void cListItem::SetFromString(char *s, bool Enabled)
+void cListItem::SetFromString(char *s, bool Enabled, int LineNumber)
 {
   enabled = Enabled;
+  lineNumber = LineNumber;
   if (s[0] == '!')
      string = strdup(s + 1);
   else
