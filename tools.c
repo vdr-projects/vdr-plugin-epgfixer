@@ -122,17 +122,56 @@ void FixOriginalEpgBugs(cEvent *event)
 
   // Sometimes they repeat the Title in the ShortText:
   // This check runs AFTER compactspace to ensure clean comparison
-  if (EpgfixerSetup.repeatedtitle && title && shortText) {
+  if (EpgfixerSetup.repeatedtitle > 0 && title && shortText) {
      int titleLen = strlen(title);
      // Check if shortText starts with title (case-insensitive)
      if (strncasecmp(title, shortText, titleLen) == 0) {
         char *afterTitle = shortText + titleLen;
-        // Only match if title is followed by end-of-string or whitespace
-        if (*afterTitle == '\0' || *afterTitle == ' ' || *afterTitle == '\t' || *afterTitle == '\n' || *afterTitle == '\r') {
+
+        bool isValidBoundary = false;
+
+        // Check boundary based on mode
+        // Mode 1 (conservative): Only whitespace or end-of-string
+        // Mode 2 (aggressive): Also accept : | / as separators
+        if (*afterTitle == '\0' ||
+            *afterTitle == ' ' ||
+            *afterTitle == '\t' ||
+            *afterTitle == '\n' ||
+            *afterTitle == '\r') {
+           isValidBoundary = true;
+           DEBUG_BUGFIXES("FixOriginalEpgBugs() - RepeatedTitle: Found whitespace/end boundary after title");
+           }
+        else if (EpgfixerSetup.repeatedtitle >= 2) {
+           // Aggressive mode: also accept punctuation separators
+           // Note: Deliberately excluding '-' to avoid compound word issues (e.g., "News-Magazine")
+           if (*afterTitle == ':' ||
+               *afterTitle == '|' ||
+               *afterTitle == '/') {
+              isValidBoundary = true;
+              DEBUG_BUGFIXES("FixOriginalEpgBugs() - RepeatedTitle: Found punctuation boundary '%c' after title (aggressive mode)", *afterTitle);
+              }
+           }
+
+        if (isValidBoundary) {
            char *remainder = afterTitle;
-           // Skip any whitespace after the title
-           while (*remainder && (*remainder == ' ' || *remainder == '\t' || *remainder == '\n' || *remainder == '\r'))
-              remainder++;
+
+           // Skip whitespace and separators based on mode
+           if (EpgfixerSetup.repeatedtitle >= 2) {
+              // Aggressive: skip whitespace and punctuation separators
+              while (*remainder && (*remainder == ' ' || *remainder == '\t' ||
+                                    *remainder == '\n' || *remainder == '\r' ||
+                                    *remainder == ':' || *remainder == '|' ||
+                                    *remainder == '/'))
+                 remainder++;
+              }
+           else {
+              // Conservative: only skip whitespace
+              while (*remainder && (*remainder == ' ' || *remainder == '\t' ||
+                                    *remainder == '\n' || *remainder == '\r'))
+                 remainder++;
+              }
+
+           DEBUG_BUGFIXES("FixOriginalEpgBugs() - RepeatedTitle: Removing title from shorttext, remainder='%s'", remainder);
 
            // If there's remaining text, keep it; otherwise remove shortText entirely
            if (*remainder) {
