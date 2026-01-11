@@ -53,8 +53,8 @@ protected:
 public:
   cListItem();
   virtual ~cListItem();
-  virtual bool Apply(cChannel *Channel) { return 0; }
-  virtual bool Apply(cEvent *Event) { return 0; }
+  virtual bool Apply(cChannel *Channel, tChannelID ChannelID = tChannelID()) { return 0; }
+  virtual bool Apply(cEvent *Event, tChannelID ChannelID = tChannelID()) { return 0; }
   void SetFromString(char *string, bool Enabled, int LineNumber = 0);
   const char *GetString() { return string; }
   bool IsEnabled(void) { return enabled; }
