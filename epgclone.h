@@ -23,7 +23,7 @@ public:
   cEpgClone();
   virtual ~cEpgClone();
   using cListItem::Apply;
-  virtual bool Apply(cEvent *Event);
+  virtual bool Apply(cEvent *Event, tChannelID ChannelID = tChannelID());
   void SetFromString(char *string, bool Enabled, int LineNumber = 0);
 };
 
