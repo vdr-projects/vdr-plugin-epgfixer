@@ -245,14 +245,14 @@ void FixOriginalEpgBugs(cEvent *event)
   free(description);
 }
 
-bool FixBugs(cEvent *Event)
+bool FixBugs(cEvent *Event, tChannelID ChannelID)
 {
-  return EpgfixerRegexps.Apply(Event);
+  return EpgfixerRegexps.Apply(Event, ChannelID);
 }
 
-bool FixCharSets(cEvent *Event)
+bool FixCharSets(cEvent *Event, tChannelID ChannelID)
 {
-  return EpgfixerCharSets.Apply(Event);
+  return EpgfixerCharSets.Apply(Event, ChannelID);
 }
 
 void StripHTML(cEvent *Event)
@@ -570,9 +570,19 @@ bool cListItem::IsActive(tChannelID ChannelID)
      int i = 0;
 #if VDRVERSNUM >= 20301
      LOCK_CHANNELS_READ;
-     int channel_number = Channels->GetByChannelID(ChannelID)->Number();
+     const cChannel *channel = Channels->GetByChannelID(ChannelID);
+     if (!channel) {
+        // Channel not found, treat as inactive
+        return false;
+        }
+     int channel_number = channel->Number();
 #else
-     int channel_number = Channels.GetByChannelID(ChannelID)->Number();
+     const cChannel *channel = Channels.GetByChannelID(ChannelID);
+     if (!channel) {
+        // Channel not found, treat as inactive
+        return false;
+        }
+     int channel_number = channel->Number();
 #endif
      while (i < numchannels) {
            if ((channel_number == GetChannelNum(i)) ||

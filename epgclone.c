@@ -62,20 +62,30 @@ void cEpgClone::CloneEvent(cEvent *Source, cEvent *Dest) {
      else
         channelID = tChannelID::InvalidID;
      }
-  else
-     channelID = tChannelID::FromString(dest_str);
+  else {
+     if (dest_str)
+        channelID = tChannelID::FromString(dest_str);
+     else
+        channelID = tChannelID::InvalidID;
+     }
   if (channelID == tChannelID::InvalidID) {
      enabled = false;
      delete Dest;
-     error("Destination channel %s not found for cloning, disabling cloning!", (dest_num ? *itoa(dest_num) : dest_str));
+     error("Destination channel %s not found for cloning, disabling cloning!", (dest_num ? *itoa(dest_num) : (dest_str ? dest_str : "NULL")));
      }
   else
      AddEvent(Dest, channelID);
 }
 
-bool cEpgClone::Apply(cEvent *Event)
+bool cEpgClone::Apply(cEvent *Event, tChannelID ChannelID)
 {
-  if (Event && enabled && IsActive(Event->ChannelID())) {
+  // Use provided ChannelID if Event->ChannelID() is invalid
+  tChannelID eventChannelID = Event ? Event->ChannelID() : tChannelID();
+  if (!eventChannelID.Valid() && ChannelID.Valid()) {
+     eventChannelID = ChannelID;
+     }
+
+  if (Event && enabled && IsActive(eventChannelID)) {
      cEvent *event = new cEvent(Event->EventID());
      CloneEvent(Event, event);
      return true;
