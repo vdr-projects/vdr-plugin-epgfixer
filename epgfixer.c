@@ -163,6 +163,14 @@ bool cPluginEpgfixer::SetupParse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "ReplaceBackticksWithSingleQuotes"))    EpgfixerSetup.nobackticks = atoi(Value);
   else if (!strcasecmp(Name, "FixStreamComponentDescriptions"))      EpgfixerSetup.components = atoi(Value);
   else if (!strcasecmp(Name, "StripHTMLEntities"))                   EpgfixerSetup.striphtml = atoi(Value);
+  else if (!strcasecmp(Name, "DebugEpgHandler"))                     EpgfixerSetup.debug_epghandler = atoi(Value);
+  else if (!strcasecmp(Name, "DebugChannelFilter"))                  EpgfixerSetup.debug_channelfilter = atoi(Value);
+  else if (!strcasecmp(Name, "DebugRegexp"))                         EpgfixerSetup.debug_regexp = atoi(Value);
+  else if (!strcasecmp(Name, "DebugCharset"))                        EpgfixerSetup.debug_charset = atoi(Value);
+  else if (!strcasecmp(Name, "DebugEpgClone"))                       EpgfixerSetup.debug_epgclone = atoi(Value);
+  else if (!strcasecmp(Name, "DebugBlacklist"))                      EpgfixerSetup.debug_blacklist = atoi(Value);
+  else if (!strcasecmp(Name, "DebugHtmlStrip"))                      EpgfixerSetup.debug_htmlstrip = atoi(Value);
+  else if (!strcasecmp(Name, "DebugBugFixes"))                       EpgfixerSetup.debug_bugfixes = atoi(Value);
   else
      return false;
 
