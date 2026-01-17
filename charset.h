@@ -23,7 +23,7 @@ public:
   virtual ~cCharSet();
   using cListItem::Apply;
   virtual bool Apply(cEvent *Event, tChannelID ChannelID = tChannelID());
-  void SetFromString(char *string, bool Enabled);
+  void SetFromString(char *string, bool Enabled, int LineNumber = 0);
 };
 
 // Global instance

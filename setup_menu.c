@@ -190,6 +190,9 @@ void cMenuSetupEpgfixer::Set(void)
   Add(new cOsdItem(tr("EPG cloning"), osUser4));
   help.Append(tr("Edit EPG data cloning."));
 
+  Add(new cOsdItem(tr("Debug logging"), osUser5));
+  help.Append(tr("Configure debug logging options."));
+
   Add(new cOsdItem(tr("--- EPG bugfixes ---"), osUnknown, false));
   help.Append("");
 
@@ -199,9 +202,13 @@ void cMenuSetupEpgfixer::Set(void)
   Add(new cMenuEditBoolItem(tr("Move Description from ShortText"),
                             &newconfig.blankbeforedescription));
   help.Append(tr("EPG bugfix level >= 1: Some channels put the Description into the ShortText (preceded by a blank) if there is no actual ShortText and the Description is short enough:\n\nTitle\n Description"));
-  Add(new cMenuEditBoolItem(tr("Remove repeated title from ShortText"),
-                            &newconfig.repeatedtitle));
-  help.Append(tr("EPG bugfix level >= 1: Sometimes they repeat the Title in the ShortText:\n\nTitle\nTitle"));
+
+  static const char *repeatedTitleModes[3];
+  repeatedTitleModes[0] = tr("no");
+  repeatedTitleModes[1] = tr("conservative");
+  repeatedTitleModes[2] = tr("aggressive");
+  Add(new cMenuEditStraItem(tr("Remove repeated title from ShortText"), &newconfig.repeatedtitle, 3, repeatedTitleModes));
+  help.Append(tr("EPG bugfix level >= 1: Remove repeated Title from ShortText:\nno=disabled\nconservative=whitespace boundaries only\naggressive=also accept : | / as separators"));
   Add(new cMenuEditBoolItem(tr("Remove double quotes from ShortText"),
                             &newconfig.doublequotedshorttext));
   help.Append(tr("EPG bugfix level >= 1: Some channels put the ShortText between double quotes, which is nothing but annoying (some even put a '.' after the closing '\"'):\n\nTitle\n\"ShortText\"[.]"));
@@ -231,7 +238,18 @@ void cMenuSetupEpgfixer::Set(void)
 
 void cMenuSetupEpgfixer::Store(void)
 {
-  EpgfixerSetup = newconfig;
+  // Copy only main menu fields from newconfig to EpgfixerSetup
+  // DO NOT copy debug fields - they are managed by the debug submenu
+  EpgfixerSetup.quotedshorttext = newconfig.quotedshorttext;
+  EpgfixerSetup.blankbeforedescription = newconfig.blankbeforedescription;
+  EpgfixerSetup.repeatedtitle = newconfig.repeatedtitle;
+  EpgfixerSetup.doublequotedshorttext = newconfig.doublequotedshorttext;
+  EpgfixerSetup.removeformatting = newconfig.removeformatting;
+  EpgfixerSetup.longshorttext = newconfig.longshorttext;
+  EpgfixerSetup.equalshorttextanddescription = newconfig.equalshorttextanddescription;
+  EpgfixerSetup.nobackticks = newconfig.nobackticks;
+  EpgfixerSetup.components = newconfig.components;
+  EpgfixerSetup.striphtml = newconfig.striphtml;
 
   SetupStore("RemoveQuotesFromShortText",           EpgfixerSetup.quotedshorttext);
   SetupStore("MoveDescriptionFromShortText",        EpgfixerSetup.blankbeforedescription);
@@ -243,6 +261,16 @@ void cMenuSetupEpgfixer::Store(void)
   SetupStore("ReplaceBackticksWithSingleQuotes",    EpgfixerSetup.nobackticks);
   SetupStore("FixStreamComponentDescriptions",      EpgfixerSetup.components);
   SetupStore("StripHTMLentities",                   EpgfixerSetup.striphtml);
+
+  // Debug options - save current values (may have been updated by debug submenu)
+  SetupStore("DebugEpgHandler",      EpgfixerSetup.debug_epghandler);
+  SetupStore("DebugChannelFilter",   EpgfixerSetup.debug_channelfilter);
+  SetupStore("DebugRegexp",          EpgfixerSetup.debug_regexp);
+  SetupStore("DebugCharset",         EpgfixerSetup.debug_charset);
+  SetupStore("DebugEpgClone",        EpgfixerSetup.debug_epgclone);
+  SetupStore("DebugBlacklist",       EpgfixerSetup.debug_blacklist);
+  SetupStore("DebugHtmlStrip",       EpgfixerSetup.debug_htmlstrip);
+  SetupStore("DebugBugFixes",        EpgfixerSetup.debug_bugfixes);
 
   Setup.Save();
 }
@@ -298,5 +326,50 @@ eOSState cMenuSetupEpgfixer::ProcessKey(eKeys Key)
      return AddSubMenu(new cMenuSetupConfigEditor<cBlacklist, cChannel>(&EpgfixerBlacklists));
   else if (state == osUser4)
      return AddSubMenu(new cMenuSetupConfigEditor<cEpgClone, cEvent>(&EpgfixerEpgClones));
+  else if (state == osUser5)
+     return AddSubMenu(new cMenuSetupEpgfixerDebug());
   return state;
+}
+
+//--- cMenuSetupEpgfixerDebug ------------------------------------------------------
+
+cMenuSetupEpgfixerDebug::cMenuSetupEpgfixerDebug(void)
+{
+  newconfig = EpgfixerSetup;
+  Set();
+}
+
+void cMenuSetupEpgfixerDebug::Set(void)
+{
+  int current = Current();
+  Clear();
+
+  Add(new cOsdItem(tr("--- Debug Logging Options ---"), osUnknown, false));
+  Add(new cMenuEditBoolItem(tr("  EPG Handler"), &newconfig.debug_epghandler));
+  Add(new cMenuEditBoolItem(tr("  Channel Filtering"), &newconfig.debug_channelfilter));
+  Add(new cMenuEditBoolItem(tr("  Regular Expressions"), &newconfig.debug_regexp));
+  Add(new cMenuEditBoolItem(tr("  Character Set Conversion"), &newconfig.debug_charset));
+  Add(new cMenuEditBoolItem(tr("  EPG Cloning"), &newconfig.debug_epgclone));
+  Add(new cMenuEditBoolItem(tr("  Blacklist"), &newconfig.debug_blacklist));
+  Add(new cMenuEditBoolItem(tr("  HTML Stripping"), &newconfig.debug_htmlstrip));
+  Add(new cMenuEditBoolItem(tr("  Original EPG Bug Fixes"), &newconfig.debug_bugfixes));
+
+  SetCurrent(Get(current));
+  Display();
+}
+
+void cMenuSetupEpgfixerDebug::Store(void)
+{
+  EpgfixerSetup = newconfig;
+
+  SetupStore("DebugEpgHandler",      EpgfixerSetup.debug_epghandler);
+  SetupStore("DebugChannelFilter",   EpgfixerSetup.debug_channelfilter);
+  SetupStore("DebugRegexp",          EpgfixerSetup.debug_regexp);
+  SetupStore("DebugCharset",         EpgfixerSetup.debug_charset);
+  SetupStore("DebugEpgClone",        EpgfixerSetup.debug_epgclone);
+  SetupStore("DebugBlacklist",       EpgfixerSetup.debug_blacklist);
+  SetupStore("DebugHtmlStrip",       EpgfixerSetup.debug_htmlstrip);
+  SetupStore("DebugBugFixes",        EpgfixerSetup.debug_bugfixes);
+
+  Setup.Save();
 }

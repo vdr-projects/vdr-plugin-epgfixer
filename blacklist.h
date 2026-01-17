@@ -20,7 +20,7 @@ public:
   virtual ~cBlacklist() {}
   using cListItem::Apply;
   virtual bool Apply(cChannel *Channel, tChannelID ChannelID = tChannelID());
-  void SetFromString(char *string, bool Enabled);
+  void SetFromString(char *string, bool Enabled, int LineNumber = 0);
 };
 
 // Global instance
